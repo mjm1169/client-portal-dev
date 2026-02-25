@@ -1,0 +1,39 @@
+﻿Level0,Level1,Level2,Level3,Level4,Level5,Level6,Level7,Level8,Level9,Level10,Score1,Score2,Score3,Score4,size
+Zippy,,,,,,,,,,,47,44,57,71,10000
+Zippy,Zippy England,,,,,,,,,,54,84,59,81,9000
+Zippy,Zippy England,Unit1,,,,,,,,,75,68,59,56,5000
+Zippy,Zippy England,Unit1,Team1,,,,,,,,76,51,89,86,4000
+Zippy,Zippy England,Unit1,Team1,aaa,,,,,,,44,40,49,56,3000
+Zippy,Zippy England,Unit1,Team1,bbb,fff,,,,,,56,85,89,43,2000
+Zippy,Zippy England,Unit1,Team1,bbb,fff,xxx,,,,,81,78,60,86,1500
+Zippy,Zippy England,Unit1,Team1,bbb,fff,yyy,,,,,79,40,83,54,500
+Zippy,Zippy England,Unit1,Team1,bbb,ggg,,,,,,76,65,40,46,1000
+Zippy,Zippy England,Unit1,Team1,ccc,,,,,,,74,50,52,62,1000
+Zippy,Zippy England,Unit1,Team1,ccc,ddd,,,,,,46,84,83,63,800
+Zippy,Zippy England,Unit1,Team1,ccc,eee,,,,,,61,46,70,75,200
+Zippy,Zippy England,Unit1,Team2,,,,,,,,64,50,43,52,500
+Zippy,Zippy England,Unit1,Team3,,,,,,,,86,63,51,75,100
+Zippy,Zippy England,Unit1,Team4,,,,,,,,72,70,41,89,100
+Zippy,Zippy England,Unit1,Team5,,,,,,,,68,66,61,87,100
+Zippy,Zippy England,Unit1,Team6,,,,,,,,74,59,57,55,100
+Zippy,Zippy England,Unit1,Team7,,,,,,,,46,76,76,64,95
+Zippy,Zippy England,Unit1,Team8,,,,,,,,69,71,43,87,2
+Zippy,Zippy England,Unit1,Team9,,,,,,,,68,54,72,54,3
+Zippy,Zippy England,Unit2,,,,,,,,,44,73,49,63,2000
+Zippy,Zippy England,Unit2,Team10,,,,,,,,61,55,51,50,1000
+Zippy,Zippy England,Unit2,Team11,,,,,,,,45,83,66,45,200
+Zippy,Zippy England,Unit2,Team12,,,,,,,,65,81,62,90,200
+Zippy,Zippy England,Unit2,Team13,,,,,,,,84,78,42,64,200
+Zippy,Zippy England,Unit2,Team14,,,,,,,,87,70,65,60,200
+Zippy,Zippy England,Unit2,Team15,,,,,,,,68,84,59,73,200
+Zippy,Zippy England,Unit3,,,,,,,,,81,52,64,82,1500
+Zippy,Zippy England,Unit3,Team16,,,,,,,,63,48,75,67,500
+Zippy,Zippy England,Unit3,Team17,,,,,,,,62,82,64,75,400
+Zippy,Zippy England,Unit3,Team18,,,,,,,,66,75,43,85,300
+Zippy,Zippy England,Unit4,,,,,,,,,76,53,56,69,500
+Zippy,Zippy England,Unit4,Team19,,,,,,,,49,86,41,56,300
+Zippy,Zippy England,Unit4,Team20,,,,,,,,50,81,45,55,200
+Zippy,Other,,,,,,,,,,79,90,88,83,1000
+Zippy,Other,Placeholder1,,,,,,,,,65,46,45,65,400
+Zippy,Other,Placeholder2,,,,,,,,,49,69,87,55,300
+Zippy,Other,Placeholder3,,,,,,,,,73,72,82,89,300

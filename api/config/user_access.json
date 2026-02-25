@@ -1,0 +1,19 @@
+{
+    "users": {
+      "m.mason@karianandbox.com": {
+        "pref_name": "Matty",
+        "role": "admin",
+        "pages": ["hierarchy","reports"],
+        "datasets": ["data1"],
+        "reports": ["client2"]
+      },
+      "chris.broome@ipsos.com": {
+        "pref_name": "Chris",
+        "role": "viewer",
+        "pages": ["hierarchy","reports"],
+        "datasets": ["data1"],
+        "reports": ["client2"]
+      }
+  }
+}
+  
