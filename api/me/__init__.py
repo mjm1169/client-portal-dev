@@ -1,4 +1,4 @@
-""" import base64
+import base64
 import json
 import azure.functions as func
 
@@ -29,9 +29,4 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         json.dumps({"email": email}),
         status_code=200,
         mimetype="application/json"
-    ) """
-
-import azure.functions as func
-
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    return func.HttpResponse("PYTHON FUNCTION IS RUNNING")
+    )
