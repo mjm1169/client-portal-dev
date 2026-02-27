@@ -7,6 +7,13 @@
         "datasets": ["data1","data2"],
         "reports": ["client2"]
       },
+      "matthew.test@local.dev": {
+        "pref_name": "Matty",
+        "role": "admin",
+        "pages": ["hierarchy","reports"],
+        "datasets": ["data1"],
+        "reports": ["client2"]
+      },
       "chris.broome@ipsos.com": {
         "pref_name": "Chris",
         "role": "viewer",
@@ -16,4 +23,3 @@
       }
   }
 }
-  
