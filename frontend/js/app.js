@@ -4,8 +4,21 @@ import { initRouter } from "./router.js";
 async function initApp() {
   const user = await getUser();
 
-  renderUser(user);
-  initRouter(user);
+  if (!user) {
+      renderLogin();
+      return;
+  }
+
+  renderApp(user);
+}
+
+function renderLogin() {
+  document.body.innerHTML = `
+      <h2>Please sign in</h2>
+      <button onclick="window.location.href='/.auth/login/aad'">
+          Sign In
+      </button>
+  `;
 }
 
 function renderUser(user) {
