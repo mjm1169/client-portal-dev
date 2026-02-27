@@ -4,7 +4,7 @@
         "pref_name": "Matty",
         "role": "admin",
         "pages": ["hierarchy","reports"],
-        "datasets": ["data1"],
+        "datasets": ["data1","data2"],
         "reports": ["client2"]
       },
       "chris.broome@ipsos.com": {
