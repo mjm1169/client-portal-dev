@@ -59,11 +59,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     except Exception as e:
-        return func.HttpResponse(
-            json.dumps({
-                "error": str(e),
-                "trace": traceback.format_exc()
-            }),
-            status_code=500,
-            mimetype="application/json"
-        )
+    logging.exception("Unhandled exception in /api/me")
+
+    return func.HttpResponse(
+        json.dumps({"error": "Internal server error"}),
+        status_code=500,
+        mimetype="application/json"
+    )
