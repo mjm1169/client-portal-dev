@@ -45,25 +45,34 @@ def get_dataset_for_user(email):
     return row[0] if row else None
 
 import logging
+import json
+import traceback
+import azure.functions as func
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
+    try:
+        email = get_user_email(req)
 
-    logging.info("HEADERS:")
-    for key in req.headers.keys():
-        logging.info(f"{key}: {req.headers.get(key)}")
+        if not email:
+            return func.HttpResponse("Unauthorized", status_code=401)
 
-    email = get_user_email(req)
-    
-    if not email:
-        return func.HttpResponse("Unauthorized", status_code=401)
+        dataset_file = get_dataset_for_user(email)
 
-    dataset_file = get_dataset_for_user(email)
+        if not dataset_file:
+            return func.HttpResponse("Forbidden", status_code=403)
 
-    if not dataset_file:
-        return func.HttpResponse("Forbidden", status_code=403)
+        return func.HttpResponse(
+            json.dumps({"datasetFile": dataset_file}),
+            status_code=200,
+            mimetype="application/json"
+        )
 
-    return func.HttpResponse(
-        json.dumps({"datasetFile": dataset_file}),
-        status_code=200,
-        mimetype="application/json"
-    )
+    except Exception as e:
+        return func.HttpResponse(
+            json.dumps({
+                "error": str(e),
+                "trace": traceback.format_exc()
+            }),
+            status_code=500,
+            mimetype="application/json"
+        )
