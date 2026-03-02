@@ -20,40 +20,14 @@ export function mountRadial(container, user) {
     <div id="chart"></div>
   `;
 
-  initRadial(user.datasets || []);
-}
-
-function initRadial(datasets) {
-
-  const select = document.getElementById("datasetSelect");
-
-  if (!datasets.length) {
-    select.innerHTML = "<option>No datasets assigned</option>";
-    return;
-  }
-
-  // Populate dropdown
-  datasets.forEach(ds => {
-    const option = document.createElement("option");
-    option.value = ds;
-    option.textContent = ds;
-    select.appendChild(option);
-  });
-
-  // Load first dataset immediately
-  loadData(datasets[0]);
-
-  // Change dataset
-  select.addEventListener("change", e => {
-    loadData(e.target.value);
-  });
+  loadData();
 }
 
 async function loadData(dataset) {
   try {
     console.log("Loading dataset:", dataset);
 
-    const res = await fetch(`/api/hierarchy?ds=${dataset}`);
+    const res = await fetch(`/api/me`);
 
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`);

@@ -26,62 +26,12 @@
   </div>
 </header>
 
-<main id="main-content"></main>
-<!-- Left pane: 5-card walkthrough -->
-<aside class="side-pane" aria-label="Chart explanation">
-  <div class="card-carousel">
-    <div class="card-stage">
-      <section class="info-card active">
-        <h1>ONS radial chart</h1>
-        <p>This chart represents a hierarchy. Each segment size is proportional to its value, and colour indicates score banding.</p>
-        <p>Use the dropdown on the chart to switch score views.</p>
-        <h2>Navigation</h2>
-        <p>The buttons at the bottom of this pane will take you through the key points we've found</p>
-        <h2>How to read it</h2>
-        <p>Start from the centre (Level 1) and move outward through levels. Each ring represents a deeper level in the hierarchy.</p>
-        <p>Click segments to explore (where enabled).</p>
-        <h2>Colour meaning</h2>
-        <p>Colours map to score thresholds. The legend in the chart panel shows the bands for the current score selection.</p>
-        <h2>Labels</h2>
-        <p>Labels appear on segments where space allows. As the chart scales down, labels scale with it to preserve proportion.</p>
-        <h2>Tips</h2>
-        <p>If you’re presenting this, keep the chart visible while stepping through these cards using Back / Next.</p>
-        <p>On smaller screens, the cards area scrolls if needed.</p>
-      </section>
+<nav>
+  <a href="/" data-link>Home</a>
+  <a href="/radial" data-link>Radial</a>
+  <a href="/.auth/logout">Logout</a>
+</nav>
 
-      <section class="info-card">
-        <h1>Region 1</h1>
-        <p>Region1 scores low on pride, but there are pockets of positivity in some Trusts</p>
-      </section>
-
-      <section class="info-card">
-        <h1>NHS England</h1>
-        <p>NHS England has moderately company advocacy scores but there is a clear split between low scores in Region 1 and high scores in other regions.</p>
-      </section>
-
-      <section class="info-card">
-        <h1>Region 3</h1>
-        <p>Region 3 has consistent low scores on the senior leader metric.</p>
-      </section>
-
-      <section class="info-card">
-        <h1>Summary</h1>
-        <p>Explore further by clicking on segments of interest. Use the centre circle to go back a level and the reset button to completely reset the chart.</p>
-      </section>
-    </div>
-
-    <div class="card-nav" aria-label="Card navigation">
-      <button type="button" id="prevCard">Back</button>
-
-      <div class="card-dots" id="cardDots" aria-label="Card position"></div>
-
-      <button type="button" id="nextCard">Next</button>
-      <button onclick="goToDashboard()">
-        Back to Dashboard
-      </button>
-    </div>
-  </div>
-</aside>
 <script type="module" src="/js/app.js"></script>
 </body>
 </html>
