@@ -151,3 +151,6 @@ __pycache__/
 
 # VS Code
 .vscode/
+
+# local settings
+**/local.settings.json
