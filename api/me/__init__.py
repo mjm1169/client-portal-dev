@@ -44,9 +44,13 @@ def get_dataset_for_user(email):
 
     return row[0] if row else None
 
+import logging
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
 
-    email = get_user_email(req)
+    logging.info("HEADERS:")
+    for key in req.headers.keys():
+        logging.info(f"{key}: {req.headers.get(key)}")
 
     if not email:
         return func.HttpResponse("Unauthorized", status_code=401)
