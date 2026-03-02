@@ -23,7 +23,7 @@ export function mountRadial(container, user) {
   loadData();
 }
 
-async function loadData(dataset) {
+async function loadData() {
   try {
     console.log("Loading dataset:", dataset);
 

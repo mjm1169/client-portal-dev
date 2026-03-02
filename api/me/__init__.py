@@ -2,42 +2,53 @@ import azure.functions as func
 import base64
 import json
 import os
-import pyodbc
 import logging
 from azure.storage.blob import BlobServiceClient
 import csv
 import io
 
-def get_user_email(req: func.HttpRequest):
+def get_user_email(req):
+    import base64
+    import json
+
     header = req.headers.get("x-ms-client-principal")
 
+    # LOCAL DEV: no auth header
     if not header:
-        return None
+        return "local.user@company.com"
 
+    # AZURE: real auth header
     decoded = base64.b64decode(header)
     principal = json.loads(decoded)
 
     return principal.get("userDetails")
 
 def get_sql_connection():
+    import pyodbc
     conn_str = os.environ["SQL_CONNECTION_STRING"]
     return pyodbc.connect(conn_str)
 
 def get_dataset_for_user(email):
+
+    # Local dev mode
+    if os.environ.get("WEBSITE_SITE_NAME") is None:
+        # Running locally
+        return "data1.csv"
+
+    # Production mode → use SQL
     conn = get_sql_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT DatasetFile FROM UserDatasetAccess WHERE Email = ?",
+        "SELECT datasetFile FROM UserDatasetAccess WHERE email = ?",
         email
     )
 
     row = cursor.fetchone()
-    conn.close()
 
     return row[0] if row else None
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+""" def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         email = get_user_email(req)
 
@@ -63,6 +74,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse(
         json.dumps({"error": "Internal server error"}),
         status_code=500,
+        mimetype="application/json"
+    ) """
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    email = get_user_email(req)
+    print("DEBUG EMAIL:", email)
+
+    if not email:
+        return func.HttpResponse("Unauthorized", status_code=401)
+
+    return func.HttpResponse(
+        json.dumps({"email": email}),
         mimetype="application/json"
     )
 

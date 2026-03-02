@@ -1,30 +1,28 @@
-/* export async function getUser() {
-    try {
-      const res = await fetch("/api/me");
-  
-      if (!res.ok) return null;
-  
-      return await res.json();
-    } catch {
-      return null;
-    }
-  } */
+export async function getUser() {
+  const isLocal =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
 
-function getUser(req) {
-  const header = req.headers["x-ms-client-principal"];
-
-  // Running in Azure (real auth)
-  if (header) {
-      const decoded = JSON.parse(
-          Buffer.from(header, "base64").toString("ascii")
-      );
-      return decoded.userDetails;
+  // 🔹 Local development simulation
+  if (isLocal) {
+    return {
+      userDetails: "local.user@company.com",
+      pages: ["hierarchy"],
+      datasets: ["data1.csv"]
+    };
   }
 
-  // Running locally (no header)
-  if (process.env.NODE_ENV === "development") {
-      return "matthew.test@local.dev";
-  }
+  // 🔹 Azure production auth
+  const res = await fetch("/.auth/me");
+  const data = await res.json();
 
-  return null;
+  return data.clientPrincipal;
+}
+
+export function login() {
+  window.location.href = "/.auth/login/aad";
+}
+
+export function logout() {
+  window.location.href = "/.auth/logout";
 }
