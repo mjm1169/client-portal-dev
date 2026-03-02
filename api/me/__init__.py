@@ -52,6 +52,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     for key in req.headers.keys():
         logging.info(f"{key}: {req.headers.get(key)}")
 
+    email = get_user_email(req)
+    
     if not email:
         return func.HttpResponse("Unauthorized", status_code=401)
 
