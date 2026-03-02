@@ -67,19 +67,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     )
 
 def get_dataset_from_blob(filename):
-    conn_str = os.environ["BLOB_CONNECTION_STRING"]
-    container_name = "datafiles"
+    try:
+        conn_str = os.environ["BLOB_CONNECTION_STRING"]
+        container_name = "datafiles"
 
-    blob_service_client = BlobServiceClient.from_connection_string(conn_str)
-    blob_client = blob_service_client.get_blob_client(
-        container=container_name,
-        blob=filename
-    )
+        blob_service_client = BlobServiceClient.from_connection_string(conn_str)
+        blob_client = blob_service_client.get_blob_client(
+            container=container_name,
+            blob=filename
+        )
 
-    blob_data = blob_client.download_blob().readall()
+        blob_data = blob_client.download_blob().readall()
+        return {"blob_size": len(blob_data)}
 
-    # Convert CSV to JSON
-    csv_file = io.StringIO(blob_data.decode("utf-8"))
-    reader = csv.DictReader(csv_file)
-
-    return list(reader)
+    except Exception as e:
+        return {"blob_error": str(e)}
