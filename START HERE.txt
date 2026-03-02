@@ -4,3 +4,4 @@ swa start ./frontend --api-location ./api
 
 If 401
 http://localhost:4280/.auth/login/aad
+boo
