@@ -18,27 +18,8 @@ def get_user_email(req: func.HttpRequest):
     return principal.get("userDetails")
 
 def get_sql_connection():
-    server = os.environ["SQL_SERVER"]
-    database = os.environ["SQL_DATABASE"]
-
-    credential = DefaultAzureCredential()
-
-    # Get access token for Azure SQL
-    token = credential.get_token("https://database.windows.net/.default").token
-
-    # Convert token to bytes for ODBC
-    token_bytes = bytes(token, "utf-8")
-    exptoken = struct.pack("=i", len(token_bytes)) + token_bytes
-
-    conn_str = (
-        "Driver={ODBC Driver 18 for SQL Server};"
-        f"Server=tcp:{server},1433;"
-        f"Database={database};"
-        "Encrypt=yes;"
-        "TrustServerCertificate=no;"
-    )
-
-    return pyodbc.connect(conn_str, attrs_before={1256: exptoken})
+    conn_str = os.environ["SQL_CONNECTION_STRING"]
+    return pyodbc.connect(conn_str)
 
 def get_dataset_for_user(email):
     conn = get_sql_connection()
