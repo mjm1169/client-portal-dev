@@ -67,18 +67,27 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     )
 
 def get_dataset_from_blob(filename):
-    try:
-        conn_str = os.environ["BLOB_CONNECTION_STRING"]
-        container_name = "datafiles"
+    conn_str = os.environ["BLOB_CONNECTION_STRING"]
+    container_name = "datafiles"
 
-        blob_service_client = BlobServiceClient.from_connection_string(conn_str)
-        blob_client = blob_service_client.get_blob_client(
-            container=container_name,
-            blob=filename
-        )
+    blob_service_client = BlobServiceClient.from_connection_string(conn_str)
+    blob_client = blob_service_client.get_blob_client(
+        container=container_name,
+        blob=filename
+    )
 
-        blob_data = blob_client.download_blob().readall()
-        return {"blob_size": len(blob_data)}
+    blob_data = blob_client.download_blob().readall()
 
-    except Exception as e:
-        return {"blob_error": str(e)}
+    # Decode safely (handles BOM)
+    text = blob_data.decode("utf-8-sig")
+
+    csv_file = io.StringIO(text)
+
+    # Auto-detect delimiter
+    sample = csv_file.read(1024)
+    csv_file.seek(0)
+
+    dialect = csv.Sniffer().sniff(sample)
+    reader = csv.DictReader(csv_file, dialect=dialect)
+
+    return list(reader)
