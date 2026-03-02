@@ -67,15 +67,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=200,
             mimetype="application/json"
         )
-
     except Exception as e:
         logging.exception("Unhandled exception in /api/me")
 
     return func.HttpResponse(
-        json.dumps({"error": "Internal server error"}),
+        json.dumps({"error": str(e)}),
         status_code=500,
         mimetype="application/json"
     )
+    
 """ def main(req: func.HttpRequest) -> func.HttpResponse:
     email = get_user_email(req)
     print("DEBUG EMAIL:", email)
