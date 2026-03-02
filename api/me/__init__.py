@@ -48,7 +48,7 @@ def get_dataset_for_user(email):
 
     return row[0] if row else None
 
-""" def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         email = get_user_email(req)
 
@@ -75,8 +75,8 @@ def get_dataset_for_user(email):
         json.dumps({"error": "Internal server error"}),
         status_code=500,
         mimetype="application/json"
-    ) """
-def main(req: func.HttpRequest) -> func.HttpResponse:
+    )
+""" def main(req: func.HttpRequest) -> func.HttpResponse:
     email = get_user_email(req)
     print("DEBUG EMAIL:", email)
 
@@ -86,7 +86,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     return func.HttpResponse(
         json.dumps({"email": email}),
         mimetype="application/json"
-    )
+    ) """
 
 def get_dataset_from_blob(filename):
     conn_str = os.environ["BLOB_CONNECTION_STRING"]

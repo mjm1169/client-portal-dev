@@ -25,7 +25,7 @@ export function mountRadial(container, user) {
 
 async function loadData() {
   try {
-    console.log("Loading dataset:", dataset);
+    //console.log("Loading dataset:", dataset);
 
     const res = await fetch(`/api/me`);
 
