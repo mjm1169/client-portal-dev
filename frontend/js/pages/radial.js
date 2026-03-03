@@ -2,11 +2,6 @@ import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 export function mountRadial(container, user) {
 
-  if (!user?.pages?.includes("hierarchy")) {
-    container.innerHTML = "<h2>Access denied</h2>";
-    return;
-  }
-
   container.innerHTML = `
     <h2>Radial Hierarchy</h2>
     <div style="padding:10px;">
