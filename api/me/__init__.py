@@ -21,7 +21,7 @@ def get_user_email(req):
     decoded = base64.b64decode(header)
     principal = json.loads(decoded)
 
-    return principal.get("userDetails")
+    return principal.get("userDetails").lower()
 
 def get_sql_connection():
     import pyodbc
