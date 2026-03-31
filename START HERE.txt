@@ -4,3 +4,7 @@ swa start ./frontend --api-location ./api
 
 If 401
 http://localhost:4280/.auth/login/aad
+
+Add to SQL DB
+INSERT INTO UserDatasetAccess (email, datasetFile)
+VALUES ('colleague@yourcompany.com', 'data1.csv');

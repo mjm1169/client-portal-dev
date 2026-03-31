@@ -4,7 +4,9 @@ export async function getUser() {
     window.location.hostname === "127.0.0.1";
 
   // 🔹 Local development simulation
+
   if (isLocal) {
+    console.warn("Running in local dev mode (mock user)");
     return {
       userDetails: "local.user@company.com",
       pages: ["hierarchy"],

@@ -15,23 +15,36 @@ export function mountRadial(container, user) {
     <div id="chart"></div>
   `;
 
-  loadData();
+  loadData(user);
 }
 
-async function loadData() {
+async function loadData(user) {
   try {
-    //console.log("Loading dataset:", dataset);
+    // 🔐 Guard: ensure user exists
+    if (!user || !user.userDetails) {
+      console.warn("No user detected");
+      return;
+    }
 
     const res = await fetch(`/api/me`);
 
+    // 🔐 Handle auth failures cleanly
     if (!res.ok) {
+      if (res.status === 401) {
+        window.location.href = "/.auth/login/aad";
+        return;
+      }
+
+      if (res.status === 403) {
+        console.warn("User not authorised for dataset");
+        return;
+      }
+
       throw new Error(`HTTP ${res.status}`);
     }
 
     const data = await res.json();
 
-    // If API already returns hierarchy object, do NOT map
-    // Only clean if it is raw rows
     if (Array.isArray(data)) {
       const cleaned = data.map(row => {
         const cleanRow = {};
@@ -47,12 +60,11 @@ async function loadData() {
 
       drawChart(cleaned);
     } else {
-      // Already a hierarchy object
       drawChart(data);
     }
 
   } catch (err) {
-    console.error("loadData error:", err);
+    console.error("loadData error");
   }
 }
 
