@@ -38,17 +38,31 @@ def get_user_email(req):
         return None
 
 
-# -----------------------------------
-# ROLE (TEMP - replace with SQL later)
-# -----------------------------------
-def get_user_role(email):
-    role_map = {
-        "local.user@company.com": "CFO",
-        "cfo@company.com": "CFO",
-        "hr@company.com": "HR"
-    }
-    return role_map.get(email, "CEO")
+def get_user_access(email):
 
+    if APP_ENV == "development":
+        return {
+            "project": "project1",
+            "role": "CEO"
+        }
+
+    conn = get_sql_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT projectId, role FROM UserDatasetAccess WHERE email = ?",
+        email
+    )
+
+    row = cursor.fetchone()
+
+    if not row:
+        return None
+
+    return {
+        "project": row[0],
+        "role": row[1]
+    }
 
 # -----------------------------------
 # DATASET ACCESS (SQL optional)
@@ -75,22 +89,6 @@ def get_sql_connection():
 
     row = cursor.fetchone()
     return row[0] if row else None """
-
-def get_project_for_user(email):
-
-    if APP_ENV == "development":
-        return "project1"  # 👈 change this
-
-    conn = get_sql_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT projectId FROM UserDatasetAccess WHERE email = ?",
-        email
-    )
-
-    row = cursor.fetchone()
-    return row[0] if row else None
 
 # -----------------------------------
 # BLOB ACCESS
@@ -258,7 +256,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if not email:
             return func.HttpResponse("Unauthorized", status_code=401)
 
-        project_id = get_project_for_user(email)
+        access = get_user_access(email)
+
+        if not access:
+            return func.HttpResponse("Forbidden", status_code=403)
+
+        project_id = access["project"]
+        role = access["role"]
 
         if not project_id:
             return func.HttpResponse("Forbidden", status_code=403)
@@ -270,7 +274,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         mapping_rows = get_csv_from_blob(mapping_file)
 
         tree = build_tree(rows)
-        role = get_user_role(email)
         filtered_tree = filter_tree(tree, role)
 
         return func.HttpResponse(
