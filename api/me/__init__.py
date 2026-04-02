@@ -301,7 +301,7 @@ def format_score_mapping(rows):
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
-        rows = get_csv_from_blob("radial-project/project1/data.csv")
+        rows = get_csv_from_blob("project1/data.csv")
 
         return func.HttpResponse(
             json.dumps({
