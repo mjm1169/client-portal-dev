@@ -25,7 +25,11 @@ async function loadData(user) {
       console.warn("No user detected");
       return;
     }
-
+    
+    if (!user || !user.userDetails) {
+      window.location.href = "/.auth/login/aad";
+      return;
+    }
     const res = await fetch(`/api/me`);
     
     // 🔐 Handle auth failures cleanly
