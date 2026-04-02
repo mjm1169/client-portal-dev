@@ -253,7 +253,7 @@ def format_score_mapping(rows):
 # -----------------------------------
 # MAIN
 # -----------------------------------
-def main(req: func.HttpRequest) -> func.HttpResponse:
+""" def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         email = get_user_email(req)
 
@@ -296,4 +296,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             json.dumps({"error": "Internal server error"}),
             status_code=500,
             mimetype="application/json"
+        )
+     """
+
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    try:
+        rows = get_csv_from_blob("project1/data.csv")
+
+        return func.HttpResponse(
+            json.dumps({
+                "rows_loaded": len(rows)
+            }),
+            status_code=200,
+            mimetype="application/json"
+        )
+
+    except Exception as e:
+        return func.HttpResponse(
+            json.dumps({"error": str(e)}),
+            status_code=500
         )
