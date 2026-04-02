@@ -27,7 +27,7 @@ async function loadData(user) {
     }
 
     const res = await fetch(`/api/me`);
-
+    
     // 🔐 Handle auth failures cleanly
     if (!res.ok) {
       if (res.status === 401) {
@@ -44,34 +44,17 @@ async function loadData(user) {
     }
 
     const data = await res.json();
-
-    if (Array.isArray(data)) {
-      const cleaned = data.map(row => {
-        const cleanRow = {};
-        Object.entries(row).forEach(([key, value]) => {
-          const cleanKey = key
-            .trim()
-            .replace(/^\uFEFF/, "")
-            .replace(/^ï»¿/, "");
-          cleanRow[cleanKey] = value;
-        });
-        return cleanRow;
-      });
-
-      drawChart(cleaned);
-    } else {
-      drawChart(data);
-    }
+    drawChart(data.tree, data.scores);
 
   } catch (err) {
     console.error("loadData error");
   }
 }
 
-function drawChart(data) {
+function drawChart(data, scores) {
+  console.log(data)
   const chart = document.getElementById("chart");
-  chart.innerHTML = `<pre>${JSON.stringify(data.slice(0,3), null, 2)}</pre>`;
-
+  chart.innerHTML = "";
   const width = 900;
   const height = 900;
   const radius = 500;
@@ -90,7 +73,7 @@ function drawChart(data) {
   
   console.log("Building hierarchy...");
   
-  let hierarchyData = buildHierarchy(data);
+  let hierarchyData = data;
 
   // Remove fake root if it only has one child
   if (
@@ -201,21 +184,29 @@ function drawChart(data) {
   // Compress outer layers
 
 
-    const arc = d3.arc()
-      .startAngle(d => d.x0)
-      .endAngle(d => d.x1)
-      .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
-      .padRadius(levelWidth / 2)
-      .innerRadius((d) =>
-        d.y0 <= 3
-          ? d.y0 * levelWidth
-          : (3 + (d.y0 - 3) * radiusOuterScale) * levelWidth,
-      )
-      .outerRadius((d) =>
-        d.y1 <= 3
-          ? d.y1 * levelWidth
-          : (3 + (d.y1 - 3) * radiusOuterScale) * levelWidth,
-      );
+  const arc = d3.arc()
+  .startAngle(d => d.x0)
+  .endAngle(d => {
+    const diff = d.x1 - d.x0;
+  
+    // if arc is effectively a full circle, trim slightly
+    return diff >= 2 * Math.PI - 1e-6
+      ? d.x1 - 1e-4
+      : d.x1;
+  })
+  .padAngle(d => d.depth === 0 ? 0 : Math.min((d.x1 - d.x0) / 2, 0.005))
+  .padRadius(levelWidth / 2)
+  .innerRadius(d =>
+    d.y0 <= 3
+      ? d.y0 * levelWidth
+      : (3 + (d.y0 - 3) * radiusOuterScale) * levelWidth
+  )
+  .outerRadius(d =>
+    d.y1 <= 3
+      ? d.y1 * levelWidth
+      : (3 + (d.y1 - 3) * radiusOuterScale) * levelWidth
+  )
+  //.attr("stroke", d => d.depth === 0 ? "none" : "#fff");
   // -----------------------------
   // SVG
   // -----------------------------
@@ -234,10 +225,10 @@ function drawChart(data) {
   const labelGroup = g.append("g")
     .attr("class", "labels")
     .style("pointer-events", "none");
-  /*const centerCircle = svg
+/*   const centerCircle = svg
     .append('circle')
     .attr('r', levelWidth)
-    .attr('fill', colorScale(root.data.scores.Score1 || 0));
+    .attr('fill', colorScale(root.data.scores.Score1 || 0)); */
     function radiusScale(d) {
 
       if (d <= 3) {
@@ -245,20 +236,25 @@ function drawChart(data) {
       }
     
       return (3 * levelWidth * 1.4) + (d - 3) * levelWidth * 0.7;
-    }*/
+    }
 
     const path = pathGroup
       .selectAll("path")
       .data(root.descendants())
       .join("path")
-      .attr("d", d => arc(d.current))   // ✅ FIX
+      .attr("d", d => arc(d.current))
       .attr("pointer-events", "all")
       .attr("fill", d => {
         const v = d.data.scores?.Score1;
         if (v == null || isNaN(v)) return "#ddd";
         return colorScale(v);
       })
-      .attr("stroke", "#fff");
+      //.attr("stroke", d => d.depth === 0 ? "none" : "#fff")  // 👈 HERE
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 0.5)
+      .attr("stroke-linejoin", "round")
+      .attr("stroke-linecap", "round")
+
     path
       .filter(d => d.children && d.children.length)
       .style('cursor', 'pointer')
@@ -279,11 +275,14 @@ function drawChart(data) {
       .attr('text-anchor', 'middle')
       .attr('dy', '0.35em')
       .style('fill', 'black')
+      .style('pointer-events', 'none')
+      .attr('pointer-events', 'none')
       .text(`${root.data.name}: ${root.data.scores.Score1 || 0}%`);
 
     const label = labelGroup
       .attr('id', 'scoresLabels')
       .attr('pointer-events', 'none')
+      .style('pointer-events', 'none')
       .attr('text-anchor', 'middle')
       .style('user-select', 'none')
       .selectAll('text')
@@ -308,7 +307,9 @@ function drawChart(data) {
       .datum(root)
       .attr('r', levelWidth)
       .attr('fill', 'transparent')
-      .attr('pointer-events', 'visibleFill')
+      .attr('pointer-events', 'all')
+      .style('cursor', 'pointer')
+      //.lower() // 👈 keep behind arcs
       .on('click', clicked);
 
     //document.getElementById('resetButton').addEventListener('click', () => {
@@ -375,28 +376,30 @@ function drawChart(data) {
         centerText.text(
           `${p.data.name}: ${p.data.scores[currentSelScore] || 0}%`,
         );
-  
         const t = svg.transition().duration(750);
+/*         centerCircle
+          .datum(p)
+          .transition(t)
+          .attr('fill', d => colorScale(d.data.scores[selectedScore] || 0)); */
+        
          
         const newColorScale = d3
           .scaleThreshold()
           .domain([50, 60, 70, 100])
           .range([colors[0], colors[1], colors[2], colors[3]]);
         
-        path
-          .transition(t)
-          .attr('fill', d => newColorScale(d.data.scores[selectedScore] || 0))
-          .tween('data', (d) => {
-            const i = d3.interpolate(d.current, d.target);
-            return (t) => (d.current = i(t));
-          })
-          //.attr('pointer-events', d =>
-          //  arcVisible(d.current) ? 'auto' : 'none'
-          //)
-          .attr("pointer-events", d => d.children ? "auto" : "none")
-          .attrTween('d', (d) => {
-            return () => arc(d.current);
-          });
+          path
+            .transition(t)
+            .attr('fill', d => newColorScale(d.data.scores[selectedScore] || 0))
+            .attr("stroke", d => (d.depth === p.depth ? "none" : "#fff"))
+            .tween('data', (d) => {
+              const i = d3.interpolate(d.current, d.target);
+              return (tVal) => (d.current = i(tVal));
+            })
+            .attr("pointer-events", d => d.children ? "auto" : "none")
+            .attrTween('d', (d) => {
+              return () => arc(d.current);
+            });
   
           label
           .filter(function (d) {
@@ -416,13 +419,15 @@ function drawChart(data) {
     }
     const scoreSelector = document.getElementById('scoreSelector');
   
-    scoreSelector.addEventListener('change', function () {
+/*     scoreSelector.addEventListener('change', function () {
       const selectedScore = this.value;
       clicked(null,currentNode,selectedScore);
-    });
+    }); */
   
     let currentNode = root; // Initialize to root node
-  
+    populateScoreDropdown(scores, (selectedScore) => {
+      clicked(null, currentNode, selectedScore);
+    });
     clicked(null,currentNode,d3.select('#scoreSelector').property('value')); // Default initialization with Score1
 
     function arcVisible(d) {
@@ -502,11 +507,38 @@ function drawChart(data) {
 function normalizeKey(k) {
   return k.replace(/^\uFEFF/, "").trim();
 }
+function populateScoreDropdown(scores, onChangeCallback) {
+  const dropdown = d3.select('#scoreSelector');
+
+  // Clear existing options
+  dropdown.selectAll('option').remove();
+
+  // Add options
+  scores.forEach(s => {
+    dropdown.append('option')
+      .attr('value', s.id)
+      .text(s.label);
+  });
+
+  // Default selection
+  if (scores.length > 0) {
+    dropdown.property('value', scores[0].id);
+  }
+
+  // Change handler
+  dropdown.on('change', function () {
+    const selectedScore = this.value;
+
+    if (onChangeCallback) {
+      onChangeCallback(selectedScore);
+    }
+  });
+}
 /**********************************************************
  * HIERARCHY BUILDER
  **********************************************************/
 
-function buildHierarchy(rows) {
+/* function buildHierarchy(rows) {
 
   // 🔥 Clean BOM from first column name if present
   rows = rows.map(row => {
@@ -652,12 +684,12 @@ function buildHierarchy(rows) {
  * DEBUG HELPERS
  **********************************************************/
 
-window.debugHierarchy = function () {
+/* window.debugHierarchy = function () {
 
   console.log("Debug: reloading hierarchy");
 
   loadHierarchy();
-};
+}; */ 
 
   /* ===============================
      Card carousel (left pane)

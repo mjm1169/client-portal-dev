@@ -8,11 +8,8 @@ import csv
 import io
 
 # -----------------------------------
-# ENVIRONMENT FLAG
+# ENVIRONMENT
 # -----------------------------------
-# Set this in:
-# local.settings.json → "APP_ENV": "development"
-# Azure → "APP_ENV": "production"
 APP_ENV = os.environ.get("APP_ENV", "production")
 
 
@@ -22,7 +19,6 @@ APP_ENV = os.environ.get("APP_ENV", "production")
 def get_user_email(req):
     header = req.headers.get("x-ms-client-principal")
 
-    # LOCAL DEV MODE ONLY
     if not header:
         if APP_ENV == "development":
             return "local.user@company.com"
@@ -43,7 +39,19 @@ def get_user_email(req):
 
 
 # -----------------------------------
-# SQL ACCESS
+# ROLE (TEMP - replace with SQL later)
+# -----------------------------------
+def get_user_role(email):
+    role_map = {
+        "local.user@company.com": "CFO",
+        "cfo@company.com": "CFO",
+        "hr@company.com": "HR"
+    }
+    return role_map.get(email, "CEO")
+
+
+# -----------------------------------
+# DATASET ACCESS (SQL optional)
 # -----------------------------------
 def get_sql_connection():
     import pyodbc
@@ -51,34 +59,43 @@ def get_sql_connection():
     return pyodbc.connect(conn_str)
 
 
-def get_dataset_for_user(email):
-
-    # LOCAL DEV OPTION (safe version)
-    # -----------------------------------
-    # Option A (recommended): use real SQL locally
-    # Option B: fallback dataset for quick testing
+""" def get_dataset_for_user(email):
 
     if APP_ENV == "development":
-        # 👉 COMMENT THIS OUT once you want real SQL locally
         return "data1.csv"
 
-    # PRODUCTION (always enforced)
     conn = get_sql_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT datasetFile FROM UserDatasetAccess WHERE email = ?",
+        "SELECT projectId FROM UserDatasetAccess WHERE email = ?",
+        #SELECT datasetFile FROM UserDatasetAccess WHERE email = ?,
+        email
+    )
+
+    row = cursor.fetchone()
+    return row[0] if row else None """
+
+def get_project_for_user(email):
+
+    if APP_ENV == "development":
+        return "project1"  # 👈 change this
+
+    conn = get_sql_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT projectId FROM UserDatasetAccess WHERE email = ?",
         email
     )
 
     row = cursor.fetchone()
     return row[0] if row else None
 
-
 # -----------------------------------
 # BLOB ACCESS
 # -----------------------------------
-def get_dataset_from_blob(filename):
+""" def get_dataset_from_blob(filename):
     conn_str = os.environ["BLOB_CONNECTION_STRING"]
     container_name = os.environ["BLOB_CONTAINER_NAME"]
 
@@ -99,11 +116,140 @@ def get_dataset_from_blob(filename):
     dialect = csv.Sniffer().sniff(sample)
     reader = csv.DictReader(csv_file, dialect=dialect)
 
+    return list(reader) """
+def get_csv_from_blob(blob_path):
+    conn_str = os.environ["BLOB_CONNECTION_STRING"]
+    container_name = os.environ["BLOB_CONTAINER_NAME"]
+
+    blob_service_client = BlobServiceClient.from_connection_string(conn_str)
+    blob_client = blob_service_client.get_blob_client(
+        container=container_name,
+        blob=blob_path
+    )
+
+    blob_data = blob_client.download_blob().readall()
+
+    text = blob_data.decode("utf-8-sig")
+    csv_file = io.StringIO(text)
+
+    sample = csv_file.read(1024)
+    csv_file.seek(0)
+
+    dialect = csv.Sniffer().sniff(sample)
+    reader = csv.DictReader(csv_file, dialect=dialect)
+
     return list(reader)
+
+# -----------------------------------
+# BUILD TREE (matches your frontend)
+# -----------------------------------
+def build_tree(rows):
+
+    root = {
+        "name": "Root",
+        "children": [],
+        "path": ""
+    }
+
+    # detect score columns dynamically
+    score_columns = [
+        col for col in rows[0].keys()
+        if col.lower().startswith("score")
+    ]
+
+    def get_or_create_child(parent, name):
+        child = next((c for c in parent["children"] if c["name"] == name), None)
+
+        if not child:
+            child = {
+                "name": name,
+                "children": [],
+                "scores": {},
+                "size": 0,
+                "path": parent["path"] + "/" + name
+            }
+            parent["children"].append(child)
+
+        return child
+
+    for row in rows:
+        current = root
+
+        # walk hierarchy
+        for i in range(11):
+            level = row.get(f"Level{i}")
+            if not level:
+                break
+
+            current = get_or_create_child(current, level.strip())
+
+        # accumulate size (important)
+        row_size = float(row.get("size") or 0)
+        current["size"] += row_size
+
+        # assign scores
+        for col in score_columns:
+            val = row.get(col)
+            if val not in (None, ""):
+                current["scores"][col] = float(val)
+
+    # remove size from non-leaf nodes
+    def clean_sizes(node):
+        if node.get("children"):
+            node.pop("size", None)
+            for child in node["children"]:
+                clean_sizes(child)
+
+    clean_sizes(root)
+
+    return root["children"][0] if root["children"] else root
 
 
 # -----------------------------------
-# MAIN FUNCTION
+# FILTER TREE BY ROLE
+# -----------------------------------
+def filter_tree(node, role):
+
+    role_map = {
+        "CEO": "/NHS",
+        "CFO": "/NHS/NHS England/Region1",
+        "HR": "/NHS/NHS England/Region1/Trust1"
+    }
+
+    allowed_path = role_map.get(role)
+
+    # CEO sees full tree
+    if role == "CEO":
+        return node
+
+    # Depth-first search to FIND the allowed node
+    def find_node(n):
+        if n.get("path") == allowed_path:
+            return n
+
+        for child in n.get("children", []):
+            result = find_node(child)
+            if result:
+                return result
+
+        return None
+
+    return find_node(node)
+
+# -----------------------------------
+# FORMAT SCORE MAPPING
+# -----------------------------------
+def format_score_mapping(rows):
+    return [
+        {
+            "id": row.get("QID"),
+            "label": row.get("Qtext")
+        }
+        for row in rows
+    ]
+
+# -----------------------------------
+# MAIN
 # -----------------------------------
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
@@ -112,17 +258,26 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if not email:
             return func.HttpResponse("Unauthorized", status_code=401)
 
-        dataset_file = get_dataset_for_user(email)
+        project_id = get_project_for_user(email)
 
-        if not dataset_file:
+        if not project_id:
             return func.HttpResponse("Forbidden", status_code=403)
 
-        logging.info(f"User {email} accessing dataset {dataset_file}")
+        hierarchy_file = f"{project_id}/data.csv"
+        mapping_file   = f"{project_id}/qText.csv"
 
-        data = get_dataset_from_blob(dataset_file)
+        rows = get_csv_from_blob(hierarchy_file)
+        mapping_rows = get_csv_from_blob(mapping_file)
+
+        tree = build_tree(rows)
+        role = get_user_role(email)
+        filtered_tree = filter_tree(tree, role)
 
         return func.HttpResponse(
-            json.dumps(data),
+            json.dumps({
+                "tree": filtered_tree,
+                "scores": format_score_mapping(mapping_rows)
+            }),
             status_code=200,
             mimetype="application/json"
         )
