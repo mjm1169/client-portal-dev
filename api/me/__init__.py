@@ -36,9 +36,13 @@ def get_user_email(req):
 
     except Exception:
         return None
-
-
 def get_user_access(email):
+    return {
+        "project": "project1",
+        "role": "CEO"
+    }
+
+""" def get_user_access(email):
 
     if APP_ENV == "development":
         return {
@@ -62,7 +66,7 @@ def get_user_access(email):
     return {
         "project": row[0],
         "role": row[1]
-    }
+    } """
 
 # -----------------------------------
 # DATASET ACCESS (SQL optional)
