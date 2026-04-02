@@ -253,7 +253,7 @@ def format_score_mapping(rows):
 # -----------------------------------
 # MAIN
 # -----------------------------------
-""" def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         email = get_user_email(req)
 
@@ -271,8 +271,8 @@ def format_score_mapping(rows):
         if not project_id:
             return func.HttpResponse("Forbidden", status_code=403)
 
-        hierarchy_file = f"radial-project/{project_id}/data.csv"
-        mapping_file   = f"radial-project/{project_id}/qText.csv"
+        hierarchy_file = f"{project_id}/data.csv"
+        mapping_file   = f"{project_id}/qText.csv"
 
         rows = get_csv_from_blob(hierarchy_file)
         mapping_rows = get_csv_from_blob(mapping_file)
@@ -296,10 +296,9 @@ def format_score_mapping(rows):
             json.dumps({"error": "Internal server error"}),
             status_code=500,
             mimetype="application/json"
-        ) """
-     
+        )
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+""" def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         rows = get_csv_from_blob("project1/data.csv")
 
@@ -315,4 +314,4 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             json.dumps({"error": str(e)}),
             status_code=500
-        ) 
+        )  """
