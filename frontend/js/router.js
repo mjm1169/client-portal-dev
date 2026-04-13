@@ -4,7 +4,6 @@ import { mountLogin } from "./pages/login.js";
 import { mountRadial } from "./pages/radial.js";
 
 const app = document.getElementById("app");
-const nav = document.getElementById("nav");
 
 function getPath() {
   return window.location.hash.replace("#", "") || "/";
@@ -12,15 +11,13 @@ function getPath() {
 
 function renderNav(user) {
   if (!user) {
-    nav.innerHTML = "";
+    document.getElementById("user-info").innerHTML = "";
     return;
   }
 
-  nav.innerHTML = `
-    <a href="#/">Home</a>
-    <a href="#/radial">Radial</a>
-    <a href="/.auth/logout">Logout</a>
-    <span style="float:right;">${user.userDetails}</span>
+  document.getElementById("user-info").innerHTML = `
+    <span>Logged in as: ${user.userDetails}</span>
+    <a href="/.auth/logout" class="logout-link">Logout</a>
   `;
 }
 

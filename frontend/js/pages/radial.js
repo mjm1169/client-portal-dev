@@ -1,35 +1,195 @@
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
-export function mountRadial(container, user) {
+/* export function mountRadial(container, user) {
 
   container.innerHTML = `
-    <h2>Radial Hierarchy</h2>
-    <div style="padding:10px;">
-      <label for="datasetSelect">Dataset:</label>
-      <select id="datasetSelect"></select>
-      <select id="scoreSelector">
-              <option value="Score1">Score1</option>
-              <option value="Score2">Score2</option>
-            </select>
-    </div>
-    <div id="chart"></div>
-  `;
+  <div class="app">
 
+
+      <h2>Radial Hierarchy</h2>
+
+      <div style="padding:10px;">
+        <label for="datasetSelect">Dataset:</label>
+        <select id="datasetSelect"></select>
+        <select id="scoreSelector">
+          <option value="Score1">Score1</option>
+          <option value="Score2">Score2</option>
+        </select>
+      </div>
+
+
+      <div id="chart"></div>
+
+
+
+  </div>
+`;
+  initCardCarousel();
   loadData(user);
 }
+ */
+export function mountRadial(container, user) {
+  renderLayout(container);
+  initCardCarousel(container);
+  loadData(container, user);
+}
+//<div class="app" style="display:grid; grid-template-columns:300px 1fr;">
+function renderLayout(container) {
+  container.innerHTML = `
+    
+    <div class="app">
+      <!-- Left pane: 5-card walkthrough -->
+      <aside class="side-pane" aria-label="Chart explanation">
+        <div class="card-carousel">
+          <div class="card-stage">
+            <section class="info-card active">
+              <h1>Interactive ONS radial chart</h1>
+              <p>This chart represents a hierarchy. Each segment size is proportional to its value, and colour indicates score banding.</p>
+              <p>Use the dropdown on the chart to switch score views.</p>
+              <h2>Navigation</h2>
+              <p>The buttons at the bottom of this pane will take you through the key points we've found</p>
+              <h2>How to read it</h2>
+              <p>Start from the centre (Level 1) and move outward through levels. Each ring represents a deeper level in the hierarchy.</p>
+              <p>Click segments to explore (where enabled).</p>
+              <h2>Colour meaning</h2>
+              <p>Colours map to score thresholds. The legend in the chart panel shows the bands for the current score selection.</p>
+              <h2>Labels</h2>
+              <p>Labels appear on segments where space allows. As the chart scales down, labels scale with it to preserve proportion.</p>
+              <h2>Tips</h2>
+              <p>If you’re presenting this, keep the chart visible while stepping through these cards using Back / Next.</p>
+              <p>On smaller screens, the cards area scrolls if needed.</p>
+            </section>
 
-async function loadData(user) {
+            <section class="info-card">
+              <h1>Region 1</h1>
+              <p>Region1 scores low on pride, but there are pockets of positivity in some Trusts</p>
+            </section>
+
+            <section class="info-card">
+              <h1>NHS England</h1>
+              <p>NHS England has moderately company advocacy scores but there is a clear split between low scores in Region 1 and high scores in other regions.</p>
+            </section>
+
+            <section class="info-card">
+              <h1>Region 3</h1>
+              <p>Region 3 has consistent low scores on the senior leader metric.</p>
+            </section>
+
+            <section class="info-card">
+              <h1>Summary</h1>
+              <p>Explore further by clicking on segments of interest. Use the centre circle to go back a level and the reset button to completely reset the chart.</p>
+            </section>
+          </div>
+
+          <div class="card-nav" aria-label="Card navigation">
+            <button type="button" id="prevCard">Back</button>
+
+            <div class="card-dots" id="cardDots" aria-label="Card position"></div>
+
+            <button type="button" id="nextCard">Next</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right pane: chart -->
+      <main class="chart-pane" aria-label="Chart">
+        <div class="chart-overlay" aria-label="Chart legend, controls and status">
+          <div class="chart-controls">
+            <label for="scoreSelector">Score:</label>
+            <select id="scoreSelector">
+              <select id="scoreSelector">
+              </select>
+            </select>
+            <button id="resetButton">Reset</button>
+            <button id="downloadSVG">Download SVG</button>
+          </div>
+
+          <div class="chart-status" id="chartStatus">Currently showing levels 1 to 3</div>
+          <div class="chart-legend" id="chartLegend"></div>
+          <div class="chart-label" id="chart-label"></div>
+        </div>
+
+        <div id="chart">
+          <div class="chart-loading">Loading chart…</div>
+        </div>
+      </main>
+    </div>
+  `;
+}
+
+function initCardCarousel(container) {
+  const cards = Array.from(container.querySelectorAll('.info-card'));
+  if (!cards.length) return;
+
+  const prevBtn = container.querySelector('#prevCard');
+  const nextBtn = container.querySelector('#nextCard');
+  const dotsEl = container.querySelector('#cardDots');
+
+  let idx = cards.findIndex(c => c.classList.contains('active'));
+  if (idx === -1) idx = 0;
+
+  // Build dots
+  dotsEl.innerHTML = '';
+  cards.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'card-dot' + (i === idx ? ' active' : '');
+    dot.addEventListener('click', () => setIdx(i));
+    dotsEl.appendChild(dot);
+  });
+
+  function render() {
+    cards.forEach((c, i) => {
+      c.classList.toggle('active', i === idx);
+    });
+
+    prevBtn.disabled = idx === 0;
+    nextBtn.disabled = idx === cards.length - 1;
+
+    Array.from(dotsEl.children).forEach((d, i) => {
+      d.classList.toggle('active', i === idx);
+    });
+  }
+
+  function setIdx(i) {
+    idx = Math.max(0, Math.min(cards.length - 1, i));
+    render();
+  }
+
+  prevBtn.addEventListener('click', () => setIdx(idx - 1));
+  nextBtn.addEventListener('click', () => setIdx(idx + 1));
+
+  render();
+}
+
+/* function loadData(container, user) {
+  const chartEl = container.querySelector('#chart');
+
+  chartEl.innerHTML = `
+    <div style="padding:20px;">
+      Chart will render here
+    </div>
+  `;
+} */
+
+async function loadData(container,user) {
   try {
     // 🔐 Guard: ensure user exists
-    if (!user || !user.userDetails) {
+    console.log("USER IN GUARD:", user);
+    console.log("user.userDetails:", user?.userDetails);
+    console.log("user.email:", user?.email);
+    if ( !user.userDetails) {
       console.warn("No user detected");
       return;
     }
     
-    if (!user || !user.userDetails) {
+    if (!user.userDetails) {
       window.location.href = "/.auth/login/aad";
       return;
     }
+
+    const chartEl = container.querySelector('#chart');
+    chartEl.innerHTML = `<div class="chart-loading">Loading chart…</div>`;
+
     const res = await fetch(`/api/me`);
     
     // 🔐 Handle auth failures cleanly
@@ -698,51 +858,47 @@ function populateScoreDropdown(scores, onChangeCallback) {
   /* ===============================
      Card carousel (left pane)
      - Non-destructive: does not touch D3 chart.
-  ================================ 
-(function initCardCarousel() {
-  const cards = Array.from(document.querySelectorAll('.info-card'));
-  if (!cards.length) return;
-
-  const prevBtn = document.getElementById('prevCard');
-  const nextBtn = document.getElementById('nextCard');
-  const dotsEl = document.getElementById('cardDots');
-
-  let idx = Math.max(0, cards.findIndex(c => c.classList.contains('active')));
-  if (idx === -1) idx = 0;
-
-  // Build dots
-  if (dotsEl) {
-    dotsEl.innerHTML = '';
-    cards.forEach((_, i) => {
-      const dot = document.createElement('button');
-      dot.type = 'button';
-      dot.className = 'card-dot' + (i === idx ? ' active' : '');
-      dot.setAttribute('aria-label', `Go to card ${i + 1}`);
-      dot.addEventListener('click', () => setIdx(i));
-      dotsEl.appendChild(dot);
-    });
-  }
-
-  function render() {
-    cards.forEach((c, i) => c.classList.toggle('active', i === idx));
-    if (prevBtn) prevBtn.disabled = idx === 0;
-    if (nextBtn) nextBtn.disabled = idx === cards.length - 1;
-
+  ================================ */
+/*   function initCardCarousel() {
+    const cards = Array.from(document.querySelectorAll('.info-card'));
+    if (!cards.length) return;
+  
+    const prevBtn = document.getElementById('prevCard');
+    const nextBtn = document.getElementById('nextCard');
+    const dotsEl = document.getElementById('cardDots');
+  
+    let idx = Math.max(0, cards.findIndex(c => c.classList.contains('active')));
+    if (idx === -1) idx = 0;
+  
     if (dotsEl) {
-      Array.from(dotsEl.children).forEach((d, i) => {
-        d.classList.toggle('active', i === idx);
+      dotsEl.innerHTML = '';
+      cards.forEach((_, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'card-dot' + (i === idx ? ' active' : '');
+        dot.addEventListener('click', () => setIdx(i));
+        dotsEl.appendChild(dot);
       });
     }
-  }
-
-  function setIdx(i) {
-    idx = Math.min(cards.length - 1, Math.max(0, i));
+  
+    function render() {
+      cards.forEach((c, i) => c.classList.toggle('active', i === idx));
+      if (prevBtn) prevBtn.disabled = idx === 0;
+      if (nextBtn) nextBtn.disabled = idx === cards.length - 1;
+  
+      if (dotsEl) {
+        Array.from(dotsEl.children).forEach((d, i) => {
+          d.classList.toggle('active', i === idx);
+        });
+      }
+    }
+  
+    function setIdx(i) {
+      idx = Math.min(cards.length - 1, Math.max(0, i));
+      render();
+    }
+  
+    prevBtn?.addEventListener('click', () => setIdx(idx - 1));
+    nextBtn?.addEventListener('click', () => setIdx(idx + 1));
+  
     render();
-  }
-
-  if (prevBtn) prevBtn.addEventListener('click', () => setIdx(idx - 1));
-  if (nextBtn) nextBtn.addEventListener('click', () => setIdx(idx + 1));
-
-  // Ensure at least one card is visible even if markup missed .active
-  render();
-})(); */
+  } */
