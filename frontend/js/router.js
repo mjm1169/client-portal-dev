@@ -24,9 +24,12 @@ function renderNav(user) {
 
 async function router() {
   const path = getPath();
+
+  // Show a loading state in the app container immediately, before any awaits
+  app.innerHTML = `<div class="chart-loading">Loading…</div>`;
+
   const user = await getUser();
 
-  // Protect entire app
   if (!user && path !== "/login") {
     window.location.hash = "/login";
     return;

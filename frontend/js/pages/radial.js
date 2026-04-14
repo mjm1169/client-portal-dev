@@ -31,7 +31,7 @@ import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 export function mountRadial(container, user) {
   renderLayout(container);
   initCardCarousel(container);
-  loadData(container, user);
+  setTimeout(() => loadData(container, user), 0);  // defer until after browser paints
 }
 //<div class="app" style="display:grid; grid-template-columns:300px 1fr;">
 function renderLayout(container) {
@@ -174,53 +174,47 @@ function initCardCarousel(container) {
   `;
 } */
 
-async function loadData(container,user) {
+async function loadData(container, user) {
   try {
-    // 🔐 Guard: ensure user exists
-    console.log("USER IN GUARD:", user);
-    console.log("user.userDetails:", user?.userDetails);
-    console.log("user.email:", user?.email);
-    if ( !user.userDetails) {
-      console.warn("No user detected");
-      return;
-    }
-    
     if (!user.userDetails) {
-      window.location.href = "/.auth/login/aad";
+      console.warn("No user detected");
       return;
     }
 
     const chartEl = container.querySelector('#chart');
-    chartEl.innerHTML = `<div class="chart-loading">Loading chart…</div>`;
+    //chartEl.innerHTML = `<div class="chart-loading">Loading chart…</div>`;
+    console.log("loadData started, chartEl contents:", chartEl.innerHTML);
+    // Force the browser to paint the loading message before continuing
+    //await new Promise(resolve => requestAnimationFrame(resolve));
 
     const res = await fetch(`/api/me`);
-    
-    // 🔐 Handle auth failures cleanly
+    console.log("fetch resolved");
     if (!res.ok) {
       if (res.status === 401) {
         window.location.href = "/.auth/login/aad";
         return;
       }
-
       if (res.status === 403) {
         console.warn("User not authorised for dataset");
         return;
       }
-
       throw new Error(`HTTP ${res.status}`);
     }
-
+    
     const data = await res.json();
-    drawChart(data.tree, data.scores);
+    console.log("about to draw chart, chartEl contents:", chartEl.innerHTML);
+
+    requestAnimationFrame(() => drawChart(data.tree, data.scores, chartEl));
 
   } catch (err) {
-    console.error("loadData error");
+    console.error("loadData error", err);
   }
 }
 
-function drawChart(data, scores) {
+function drawChart(data, scores, chartEl) {
   console.log(data)
-  const chart = document.getElementById("chart");
+  const chart = chartEl;                     // ← use passed element
+
   chart.innerHTML = "";
   const size = 800;
   const width = size;
@@ -234,7 +228,7 @@ function drawChart(data, scores) {
   //console.log("Rows:", rows.length);
 
   // Clear previous chart
-  d3.select("#chart").html("");
+  d3.select(chart).html("");
 
   // -----------------------------
   // Build hierarchy
@@ -380,7 +374,7 @@ function drawChart(data, scores) {
   // SVG
   // -----------------------------
     
-  const svg = d3.select("#chart")
+  const svg = d3.select(chart)
     .append("svg")
     .attr("viewBox", [-size / 2, -size / 2, size, size])
     .attr("width",  "100%")
