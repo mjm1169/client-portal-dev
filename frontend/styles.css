@@ -357,7 +357,7 @@ body {
   gap: 12px;
   background: rgba(255,255,255,0.9);
   padding: 12px;
-  border: 1px solid var(--color-border);
+  border: none;
   backdrop-filter: blur(4px);
   width: 560px;           /* fixed width = no resize */
   min-width: 260px;
@@ -407,4 +407,23 @@ body {
 
 .btn-secondary:hover {
   background: #eaeaea;
+}
+
+.chart-legend {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #444;
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.chart-legend-swatch {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
 }

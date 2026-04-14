@@ -2,6 +2,7 @@ import { getUser } from "./auth.js";
 import { mountHome } from "./pages/home.js";
 import { mountLogin } from "./pages/login.js";
 import { mountRadial } from "./pages/radial.js";
+import { mountUserRadial } from "./pages/userRadial.js";
 
 const app = document.getElementById("app");
 
@@ -35,6 +36,8 @@ async function router() {
 
   if (path === "/radial") {
     mountRadial(app, user);
+  } else if (path === "/userradial") {
+    mountUserRadial(app, user);
   } else if (path === "/login") {
     mountLogin(app);
   } else {

@@ -21,11 +21,30 @@ export function mountHome(container, user) {
 
       </div>
 
+      <div class="feature-card" id="goUserRadial">
+
+        <div class="feature-card__image">
+          <img src="assets/RadialExCard.png" alt="Radial chart preview">
+        </div>
+
+        <div class="feature-card__content">
+          <h2>Uploaded Radial Chart</h2>
+          <p>
+            Visualise your own uploaded data with an interactive radial hierarchy chart.
+          </p>
+
+        </div>
+
+      </div>
+
     </div>
   `;
 
   // Navigation
   container.querySelector('#goRadial').addEventListener('click', () => {
     window.location.hash = "/radial";
+  });
+  container.querySelector('#goUserRadial').addEventListener('click', () => {
+    window.location.hash = "/userradial";
   });
 }
