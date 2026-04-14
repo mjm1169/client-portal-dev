@@ -10,41 +10,41 @@ html, body {
   height: 100%;
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-
-.topbar {
-  background: #ffffff;
-  border-bottom: 1px solid #ddd;
-}
-
-.topbar__inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.brand__logo {
-  height: 60px;   /* adjust: 28–36px usually ideal */
-  width: auto;
-  display: block;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-}
-
-.user {
-  font-size: 14px;
-  color: #333;
+  font-size: 16px;
 }
 
 /* ===============================
-   PAGE LAYOUT (IMPORTANT)
+   DESIGN TOKENS
+================================ */
+
+:root {
+  /* Typography */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
+  --text-xxl: 2.5rem;
+
+  /* Colours */
+  --color-bg: #ffffff;
+  --color-muted: #666;
+  --color-border: #ddd;
+  --color-primary: #131B5A;
+  --color-primary-light: #e6e8ff;
+
+  /* Layout */
+  --container-width: 1200px;
+
+  /* Spacing */
+  --space-sm: 10px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+}
+
+/* ===============================
+   PAGE LAYOUT
 ================================ */
 
 body {
@@ -59,23 +59,85 @@ body {
 }
 
 /* ===============================
-   APP GRID (THIS IS THE KEY BIT)
+   TOPBAR
+================================ */
+
+.topbar {
+  background: #f2f2f2;
+  border-bottom: 1px solid var(--color-border);
+  height: clamp(60px, 10vh, 100px);
+}
+
+.topbar__inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(16px, 4vw, 32px);
+  max-width: var(--container-width);
+  margin: 0 auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.brand__logo {
+  height: clamp(52px, 6vh, 90px);
+  width: auto;
+  display: block;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: var(--text-sm);
+  color: #333;
+}
+
+.logout-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.logout-link:hover {
+  text-decoration: underline;
+}
+
+/* ===============================
+   APP GRID
 ================================ */
 
 .app {
-  display: grid !important;
-  grid-template-columns: minmax(360px, 420px) 1fr !important;
+  display: grid;
+  grid-template-columns: minmax(360px, 420px) 1fr;
   height: 100%;
 }
 
 /* ===============================
    LEFT PANEL
 ================================ */
+.side-pane h1 {
+  font-size: var(--text-xl);   /* was 36px */
+}
+
+.side-pane h2 {
+  font-size: var(--text-md);
+}
+
+.side-pane p {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
 
 .side-pane {
-  background: #131B5A;
+  background: var(--color-primary);
   color: white;
-  padding: 24px;
+  padding: var(--space-lg);
   overflow: hidden;
 }
 
@@ -111,8 +173,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: 16px;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
 }
 
 .card-nav button {
@@ -154,28 +216,33 @@ body {
 
 .card-dot.active { background: rgba(255, 255, 255, 0.95); }
 
+
 /* ===============================
    RIGHT PANEL
 ================================ */
 
 .chart-pane {
+  height: calc(100vh - var(--topbar-height, 80px));
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: white;
+  background: var(--color-bg);
   overflow: hidden;
-  padding: 20px;
+  min-height: 0; 
+  padding: var(--space-lg);
 }
 
 #chart {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  min-height: 0;
 }
 
 #chart svg {
   max-width: 100%;
+  max-height: 100%;
   height: auto;
 }
 
@@ -188,7 +255,9 @@ body {
   top: 16px;
   left: 16px;
   z-index: 10;
-  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .chart-controls {
@@ -196,49 +265,36 @@ body {
 }
 
 .chart-loading {
-  font-size: 14px;
-  color: #666;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
 }
 
-.user {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  font-size: 14px;
-  color: #333;
-}
-
-.logout-link {
-  color: #131B5A;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.logout-link:hover {
-  text-decoration: underline;
-}
+/* ===============================
+   HOME PAGE
+================================ */
 
 .home {
-  padding: 40px 20px;
+  padding: clamp(20px, 5vw, 40px);
   max-width: 1000px;
   margin: 0 auto;
 }
 
 .home-title {
-  font-size: 42px;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: var(--space-xl);
   color: #333;
 }
 
 /* CARD */
+
 .feature-card {
   display: flex;
-  gap: 30px;
+  gap: var(--space-lg);
   align-items: center;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   background: #fafafa;
-  padding: 30px;
+  padding: var(--space-lg);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -249,6 +305,7 @@ body {
 }
 
 /* IMAGE */
+
 .feature-card__image img {
   width: 220px;
   height: auto;
@@ -256,28 +313,98 @@ body {
 }
 
 /* TEXT */
+
 .feature-card__content h2 {
-  margin: 0 0 10px;
-  font-size: 24px;
+  margin: 0 0 var(--space-sm);
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
   color: #222;
 }
 
 .feature-card__content p {
-  margin: 0 0 20px;
+  margin: 0 0 var(--space-md);
   color: #555;
   line-height: 1.5;
 }
 
-.topbar {
-  background: #f2f2f2;
-  border-bottom: 1px solid #ddd;
+/* ===============================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 768px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+
+  .side-pane {
+    display: none;
+  }
+
+  .feature-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .feature-card__image img {
+    width: 150px;
+  }
 }
 
-.topbar__inner {
+
+/* Container */
+.chart-controls {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(255,255,255,0.9);
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(4px);
+  width: 560px;           /* fixed width = no resize */
+  min-width: 260px;
+}
+
+/* Group */
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.control-group label {
+  font-size: var(--text-xs);
+  color: #555;
+}
+
+/* Select */
+#scoreSelector {
+  width: 100%;
+  max-width: 100%;
+  font-size: var(--text-sm);
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  background: white;
+  color: #111;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;   /* ← key line */
+}
+
+/* Buttons row */
+.control-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Buttons */
+.btn-secondary {
+  font-size: var(--text-sm);
+  padding: 6px 10px;
+  background: #f5f5f5;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #eaeaea;
 }
