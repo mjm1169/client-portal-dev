@@ -31,22 +31,6 @@ function renderLayout(container) {
               <h2>Tips</h2>
               <p>If you're presenting this, keep the chart visible while stepping through these cards using Back / Next.</p>
             </section>
-            <section class="info-card">
-              <h1>Region 1</h1>
-              <p>Region 1 scores low on pride, but there are pockets of positivity in some Trusts.</p>
-            </section>
-            <section class="info-card">
-              <h1>NHS England</h1>
-              <p>NHS England has moderately high advocacy scores but there is a clear split between low scores in Region 1 and high scores in other regions.</p>
-            </section>
-            <section class="info-card">
-              <h1>Region 3</h1>
-              <p>Region 3 has consistently low scores on the senior leader metric.</p>
-            </section>
-            <section class="info-card">
-              <h1>Summary</h1>
-              <p>Explore further by clicking on segments of interest. Use the centre circle to go back a level and the reset button to completely reset the chart.</p>
-            </section>
           </div>
           <div class="card-nav" aria-label="Card navigation">
             <button type="button" id="prevCard">Back</button>
@@ -58,7 +42,7 @@ function renderLayout(container) {
 
       <main class="chart-pane" aria-label="Chart">
         <div class="chart-overlay">
-          <div class="chart-controls">
+          <div class="chart-controls" id="chartControls" style="display:none;">
             <div class="control-group">
               <label for="scoreSelector">Score</label>
               <select id="scoreSelector"></select>
@@ -66,7 +50,7 @@ function renderLayout(container) {
             <div class="control-actions">
               <button id="resetButton" class="btn-secondary">Show root</button>
               <button id="loadNewFile" class="btn-secondary">Load new file</button>
-              <button id="downloadSVG" class="btn-secondary">Download</button>
+              <button id="downloadSVG" class="btn-secondary" disabled>Download</button>
             </div>
           </div>
           <div class="chart-status" id="chartStatus"></div>
@@ -140,12 +124,12 @@ function renderUploadState(container) {
               </td>
             </tr>
           </tbody>
-        </table>
+          </table>
           <div class="modal-actions">
             <button type="button" class="btn-secondary" id="modalCancel">Cancel</button>
             <button type="button" class="btn-secondary" id="modalConfirm">Select file</button>
           </div>
-          <p class="modal-status" id="modalStatus" aria-live="polite" style="display:none;">
+          <p class="modal-status" id="modalStatus" aria-live="polite" style="visibility:hidden;">
             Opening file explorer…
           </p>
         </div>
@@ -164,7 +148,7 @@ function renderUploadState(container) {
     // Open modal
     uploadTrigger.addEventListener('click', () => {
       backdrop.style.display = 'flex';
-      modalStatus.style.display = 'none';
+      modalStatus.style.visibility  = 'hidden';
       modalConfirm.disabled = false;
       modalConfirm.textContent = 'Select file';
     });
@@ -182,7 +166,7 @@ function renderUploadState(container) {
     modalConfirm.addEventListener('click', () => {
       modalConfirm.disabled = true;
       modalConfirm.textContent = 'Select file';
-      modalStatus.style.display = 'block';
+      modalStatus.style.visibility  = 'visible';
       // Small delay lets the browser paint the status message before
       // the file dialog blocks the thread
       setTimeout(() => fileInput.click(), 80);
@@ -211,14 +195,23 @@ function renderUploadState(container) {
     // Load new file button
     container.querySelector('#loadNewFile')?.addEventListener('click', () => {
         const statusEl = container.querySelector('#chartStatus');
-        if (statusEl) statusEl.textContent = '';
+        const controls = container.querySelector('#chartControls');
+        if (statusEl)  statusEl.textContent = '';
+        if (controls)  controls.style.display = 'none';
+        setDownloadEnabled(container, false);
         container.querySelector('#chart').innerHTML = '';
+        resetNarrativeCards();
         renderUploadState(container);
       });
-  
+
+    fileInput.addEventListener('cancel', () => {
+        modalStatus.style.visibility = 'hidden';
+        modalConfirm.disabled = false;
+      });
+
     function closeModal() {
       backdrop.style.display = 'none';
-      modalStatus.style.display = 'none';
+      modalStatus.style.visibility = 'hidden';
       modalConfirm.disabled = false;
       modalConfirm.textContent = 'Select file';
     }
@@ -230,32 +223,57 @@ function renderUploadState(container) {
 const SCORE_COLUMN_RE = /^score/i;
 const LEVEL_COLUMN_RE = /^level\d+$/i;
 
+function showControls(container) {
+    const controls = container.querySelector('#chartControls');
+    if (controls) controls.style.display = '';
+  }
+  
+function setDownloadEnabled(container, enabled) {
+  const btn = container.querySelector('#downloadSVG');
+  if (!btn) return;
+  btn.disabled = !enabled;
+  btn.style.opacity = enabled ? '' : '0.45';
+  btn.style.cursor  = enabled ? '' : 'default';
+}
+
 function handleFile(file, container, errorEl) {
-  clearError(errorEl);
-
-  if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
-    showError(errorEl, 'That doesn\'t look like a CSV file. Please upload a <code>.csv</code> file.');
-    return;
-  }
-
-  if (file.size > 10 * 1024 * 1024) {
-    showError(errorEl, 'File is too large (max 10 MB). Please reduce the file size and try again.');
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onerror = () => showError(errorEl, 'Could not read the file. Please try again.');
-  reader.onload = e => {
-    const result = parseAndValidate(e.target.result);
-    if (result.error) {
-      showError(errorEl, result.error);
+    clearError(errorEl);
+  
+    if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
+      showError(errorEl, 'That doesn\'t look like a CSV file. Please upload a <code>.csv</code> file.');
       return;
     }
-    container.querySelector('#chart').innerHTML = '';
-    drawChart(result.tree, result.scores);
-  };
-  reader.readAsText(file);
-}
+  
+    if (file.size > 10 * 1024 * 1024) {
+      showError(errorEl, 'File is too large (max 10 MB). Please reduce the file size and try again.');
+      return;
+    }
+  
+    const reader = new FileReader();
+    reader.onerror = () => showError(errorEl, 'Could not read the file. Please try again.');
+    reader.onload = e => {
+        const result = parseAndValidate(e.target.result);
+        if (result.error) {
+          showError(errorEl, result.error);
+          return;
+        }
+        container.querySelector('#chart').innerHTML = '';
+        showControls(container);
+        setDownloadEnabled(container, false);
+      
+        const chartController = drawChart(
+          result.tree,
+          result.scores,
+          () => setDownloadEnabled(container, true)
+        );
+      
+        generateNarrativeCards(result.tree, result.scores, ({ node, scoreId }) => {
+          chartController?.navigateTo(node, scoreId);
+        });
+      };
+    reader.readAsText(file);
+
+  }
 
 function parseAndValidate(text) {
     const cleaned = text.replace(/^\uFEFF/, '').trim();
@@ -400,46 +418,54 @@ function clearError(el) {
 // ---------------------------------------------------------------------------
 // Card carousel (unchanged)
 // ---------------------------------------------------------------------------
-function initCardCarousel(container) {
-  const cards = Array.from(container.querySelectorAll('.info-card'));
-  if (!cards.length) return;
-
-  const prevBtn = container.querySelector('#prevCard');
-  const nextBtn = container.querySelector('#nextCard');
-  const dotsEl  = container.querySelector('#cardDots');
-
-  let idx = cards.findIndex(c => c.classList.contains('active'));
-  if (idx === -1) idx = 0;
-
-  dotsEl.innerHTML = '';
-  cards.forEach((_, i) => {
-    const dot = document.createElement('button');
-    dot.className = 'card-dot' + (i === idx ? ' active' : '');
-    dot.addEventListener('click', () => setIdx(i));
-    dotsEl.appendChild(dot);
-  });
-
-  function render() {
-    cards.forEach((c, i) => c.classList.toggle('active', i === idx));
-    prevBtn.disabled = idx === 0;
-    nextBtn.disabled = idx === cards.length - 1;
-    Array.from(dotsEl.children).forEach((d, i) => d.classList.toggle('active', i === idx));
-  }
-
-  function setIdx(i) {
-    idx = Math.max(0, Math.min(cards.length - 1, i));
+function initCardCarousel(container, onCardChange) {
+    const cards = Array.from(container.querySelectorAll('.info-card'));
+    if (!cards.length) return;
+  
+    const prevBtn = container.querySelector('#prevCard');
+    const nextBtn = container.querySelector('#nextCard');
+    const dotsEl  = container.querySelector('#cardDots');
+  
+    let idx = cards.findIndex(c => c.classList.contains('active'));
+    if (idx === -1) idx = 0;
+  
+    dotsEl.innerHTML = '';
+    cards.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.className = 'card-dot' + (i === idx ? ' active' : '');
+      dot.addEventListener('click', () => setIdx(i));
+      dotsEl.appendChild(dot);
+    });
+  
+    function render() {
+      cards.forEach((c, i) => c.classList.toggle('active', i === idx));
+      prevBtn.disabled = idx === 0;
+      nextBtn.disabled = idx === cards.length - 1;
+      Array.from(dotsEl.children).forEach((d, i) => d.classList.toggle('active', i === idx));
+  
+      // Fire chart state change if callback provided
+      if (onCardChange) {
+        const activeCard = cards[idx];
+        if (activeCard?._chartState) {
+          onCardChange(activeCard._chartState);
+        }
+      }
+    }
+  
+    function setIdx(i) {
+      idx = Math.max(0, Math.min(cards.length - 1, i));
+      render();
+    }
+  
+    prevBtn.addEventListener('click', () => setIdx(idx - 1));
+    nextBtn.addEventListener('click', () => setIdx(idx + 1));
     render();
   }
-
-  prevBtn.addEventListener('click', () => setIdx(idx - 1));
-  nextBtn.addEventListener('click', () => setIdx(idx + 1));
-  render();
-}
 // ---------------------------------------------------------------------------
 // drawChart (your original — unchanged except scoreSelector is now populated
 // by populateScoreDropdown which is called from the upload path)
 // ---------------------------------------------------------------------------
-function drawChart(data, scores) {
+function drawChart(data, scores, onReady = () => {}) {
   console.log(data);
   const chart = document.getElementById("chart");
   chart.innerHTML = "";
@@ -618,12 +644,46 @@ function drawChart(data, scores) {
     });
     chartOverlay.appendChild(loadBtn);
   }
-
-  clicked(null, currentNode, firstScore);
-
+  
   document.getElementById('resetButton')?.addEventListener('click', () => {
     clicked(null, root);
   });
+
+  clicked(null, currentNode, firstScore);
+  onReady();
+
+  return {
+    navigateTo(node, scoreId) {
+      const scoreSelector = document.getElementById('scoreSelector');
+      if (scoreSelector && scoreId) {
+        scoreSelector.value = scoreId;
+      }
+
+      const target = findNodeByPath(node, root);
+      if (!target) return;
+
+      // Build ancestor chain from root down to target (excluding root itself)
+      const ancestors = target.ancestors().reverse().slice(1);
+
+      // If target is already current, just update the score
+      if (target === currentNode) {
+        clicked(null, target, scoreId);
+        return;
+      }
+
+      // Always reset to root first so the path makes sense
+      clicked(null, root, scoreId);
+
+      // Step through each ancestor with a staggered delay, ending at target
+      ancestors.forEach((ancestor, i) => {
+        const isLast = i === ancestors.length - 1;
+        setTimeout(() => {
+          clicked(null, ancestor, scoreId);
+        }, (i + 1) * 900); // 900ms per step — matches the 750ms transition plus breathing room
+      });
+    }
+  };
+
 
   function clicked(event, p, selectedScore = d3.select('#scoreSelector').property('value')) {
     currentNode = p;
@@ -709,7 +769,9 @@ function drawChart(data, scores) {
     return Math.max(...node.children.map(computeMaxDepth));
   }
 }
-
+function findNodeByPath(dataNode, partitionRoot) {
+    return partitionRoot.descendants().find(d => d.data.name === dataNode.name) || partitionRoot;
+  }
 // ---------------------------------------------------------------------------
 // Score dropdown (adapted to work without a pre-existing change handler)
 // ---------------------------------------------------------------------------
@@ -744,7 +806,6 @@ function inlineAllStyles(svgNode) {
     for (let i = 0; i < cs.length; i++) el.style.setProperty(cs[i], cs.getPropertyValue(cs[i]));
   });
 }
-
 
 // Function to download SVG with inlined CSS
 function downloadSVG() {
@@ -807,4 +868,196 @@ function downloadSVG() {
   } catch (err) {
     console.error("Error downloading SVG:", err);
   }
+}
+/* ------------------------------------
+---------------------------------------
+-----------------NARRATIVE-------------
+---------------------------------------
+-------------------------------------*/
+
+function generateNarrativeCards(tree, scores, onCardChange) {
+    const stage = document.querySelector('.card-stage');
+    if (!stage) return;
+  
+    // -----------------------------------------------------------
+    // Helpers
+    // -----------------------------------------------------------
+    const allNodes = [];
+    function walk(node, depth) {
+      allNodes.push({ node, depth });
+      (node.children || []).forEach(c => walk(c, depth + 1));
+    }
+    walk(tree, 0);
+  
+    function getSubtreeSize(node) {
+      if (!node.children?.length) return node.size || 0;
+      return node.children.reduce((sum, c) => sum + getSubtreeSize(c), 0);
+    }
+  
+    const totalSize = allNodes
+      .filter(({ node }) => !node.children?.length)
+      .reduce((sum, { node }) => sum + (node.size || 0), 0);
+  
+    const MIN_SIZE_SHARE = 0.02;
+  
+    const significantNodes = allNodes.filter(({ node, depth }) => {
+        if (depth === 0) return false;                                        // skip root
+        if (!node.children?.length) return false;                            // skip leaves
+        return getSubtreeSize(node) / totalSize >= MIN_SIZE_SHARE;           // skip tiny nodes
+      });
+  
+    function getScore(node, scoreId) {
+      return node.scores?.[scoreId] ?? null;
+    }
+  
+    function avgScoreForNode(node, scoreId) {
+      // Use the node's own score if available, otherwise average children
+      const own = getScore(node, scoreId);
+      if (own !== null) return own;
+      const children = node.children || [];
+      if (!children.length) return null;
+      const vals = children.map(c => avgScoreForNode(c, scoreId)).filter(v => v !== null);
+      return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+    }
+  
+    // Average score across all significant nodes for a given scoreId
+    function overallAvg(scoreId) {
+      const vals = significantNodes
+        .map(({ node }) => getScore(node, scoreId))
+        .filter(v => v !== null);
+      return vals.length
+        ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
+        : null;
+    }
+  
+    // -----------------------------------------------------------
+    // Card 1: Overview (static)
+    // -----------------------------------------------------------
+    const rootNode   = tree.children?.[0] || tree;
+    const rootName   = rootNode.name;
+    const scoreAvgs  = scores.map(s => ({ ...s, avg: overallAvg(s.id) })).filter(s => s.avg !== null);
+  
+      const card1 = {
+        title: rootName,
+        body: `This narrative steps through the key findings in the data. 
+               Use the Back and Next buttons to walk through each insight — 
+               the chart will animate alongside to highlight the relevant area.`,
+        chartState: { node: rootNode, scoreId: scores[0]?.id }
+      };
+    // -----------------------------------------------------------
+    // Card 2: Best scoring question overall
+    // -----------------------------------------------------------
+    const bestScore = [...scoreAvgs].sort((a, b) => b.avg - a.avg)[0];
+    const card2 = bestScore ? {
+      title: 'Strongest metric',
+      body:  `The highest scoring metric overall is <em>${bestScore.label}</em>, 
+              averaging ${bestScore.avg}% across the organisation.`,
+      chartState: { node: rootNode, scoreId: bestScore.id }
+    } : null;
+  
+    // -----------------------------------------------------------
+    // Card 3: Highest performing area + its best question
+    // -----------------------------------------------------------
+    // Score each significant node by its average across all scores
+    const scoredNodes = significantNodes.map(({ node }) => {
+      const vals = scores.map(s => getScore(node, s.id)).filter(v => v !== null);
+      const avg  = vals.length
+        ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
+        : null;
+      return { node, avg };
+    }).filter(n => n.avg !== null);
+  
+    const topNode = [...scoredNodes].sort((a, b) => b.avg - a.avg)[0];
+    let card3 = null;
+    if (topNode) {
+      const bestQ = scores
+        .map(s => ({ ...s, val: getScore(topNode.node, s.id) }))
+        .filter(s => s.val !== null)
+        .sort((a, b) => b.val - a.val)[0];
+      card3 = {
+        title: `High performer: ${topNode.node.name}`,
+        body:  `${topNode.node.name} is the strongest area overall, averaging ${topNode.avg}%.
+                ${bestQ ? `Its highest score is on <em>${bestQ.label}</em> at ${bestQ.val}%.` : ''}`,
+        chartState: { node: topNode.node, scoreId: bestQ?.id || scores[0]?.id }
+      };
+    }
+  
+    // -----------------------------------------------------------
+    // Card 4: Lowest performing area + its worst question
+    // -----------------------------------------------------------
+    const bottomNode = [...scoredNodes].sort((a, b) => a.avg - b.avg)[0];
+    let card4 = null;
+    if (bottomNode && bottomNode.node !== topNode?.node) {
+      const worstQ = scores
+        .map(s => ({ ...s, val: getScore(bottomNode.node, s.id) }))
+        .filter(s => s.val !== null)
+        .sort((a, b) => a.val - b.val)[0];
+      card4 = {
+        title: `Area for improvement: ${bottomNode.node.name}`,
+        body:  `${bottomNode.node.name} has the lowest overall average at ${bottomNode.avg}%.
+                ${worstQ ? `Its lowest score is on <em>${worstQ.label}</em> at ${worstQ.val}%.` : ''}`,
+        chartState: { node: bottomNode.node, scoreId: worstQ?.id || scores[0]?.id }
+      };
+    }
+  
+    // -----------------------------------------------------------
+    // Card 5: Navigation tips (static)
+    // -----------------------------------------------------------
+    const card5 = {
+      title: 'Explore further',
+      body:  `Click any segment to drill into that part of the organisation. 
+              Use the centre circle to navigate back up, and the score dropdown to switch metrics. 
+              Use <strong>Show root</strong> to reset the view at any time.`,
+      chartState: { node: rootNode, scoreId: scores[0]?.id }
+    };
+  
+    // -----------------------------------------------------------
+    // Render
+    // -----------------------------------------------------------
+    const cards = [card1, card2, card3, card4, card5].filter(Boolean);
+  
+    stage.innerHTML = cards.map((card, i) => `
+      <section class="info-card ${i === 0 ? 'active' : ''}" data-card-index="${i}">
+        <h1>${card.title}</h1>
+        <p>${card.body}</p>
+      </section>
+    `).join('');
+  
+    // Store chart states on the DOM nodes for the carousel to read
+    cards.forEach((card, i) => {
+      const el = stage.querySelector(`[data-card-index="${i}"]`);
+      if (el) el._chartState = card.chartState;
+    });
+  
+    // Re-init carousel, passing the chart-state callback
+    initCardCarousel(
+      document.querySelector('.app').closest('[class]') || document.body,
+      onCardChange
+    );
+  }
+
+function resetNarrativeCards() {
+  const stage = document.querySelector('.card-stage');
+  if (!stage) return;
+
+  stage.innerHTML = `
+    <section class="info-card active">
+      <h1>Interactive Radial Chart</h1>
+      <p>This chart represents a hierarchy. Each segment size is proportional to its value, and colour indicates score banding.</p>
+      <p>Use the dropdown on the chart to switch score views.</p>
+      <h2>Navigation</h2>
+      <p>The buttons at the bottom of this pane will take you through the key points.</p>
+      <h2>How to read it</h2>
+      <p>Start from the centre (Level 1) and move outward through levels. Each ring represents a deeper level in the hierarchy.</p>
+      <p>Click segments to explore (where enabled).</p>
+      <h2>Colour meaning</h2>
+      <p>Colours map to score thresholds. The legend in the chart panel shows the bands for the current score selection.</p>
+      <h2>Labels</h2>
+      <p>Labels appear on segments where space allows.</p>
+      <h2>Tips</h2>
+      <p>If you're presenting this, keep the chart visible while stepping through these cards using Back / Next.</p>
+    </section>
+  `;
+
+  initCardCarousel(document.querySelector('.app').closest('[class]') || document.body);
 }
