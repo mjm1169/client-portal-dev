@@ -67,6 +67,7 @@ def get_sql_connection():
     import pyodbc
     conn_str = os.environ["SQL_CONNECTION_STRING"]
     return pyodbc.connect(conn_str)
+    logging.info(pyodbc.drivers())
 
 
 # -----------------------------------
@@ -194,39 +195,49 @@ def format_score_mapping(rows):
 # -----------------------------------
 # MAIN
 # -----------------------------------
-def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req):
     try:
+        logging.info("START /api/me")
+
         email = get_user_email(req)
+        logging.info(f"email={email}")
 
         if not email:
             return func.HttpResponse("Unauthorized", status_code=401)
 
         access_list = get_user_access(email)
+        logging.info(f"access_list={access_list}")
 
-        if not access_list:
-            return func.HttpResponse("Forbidden", status_code=403)
-
-        # If the user has multiple projects, the frontend can request a specific
-        # one via ?project=. Default to the first assigned project.
         requested = req.params.get("project")
+        logging.info(f"requested={requested}")
+
         if requested:
             access = next((a for a in access_list if a["project"] == requested), None)
-            if not access:
-                return func.HttpResponse("Forbidden", status_code=403)
         else:
             access = access_list[0]
+
+        logging.info(f"selected_access={access}")
 
         project_id = access["project"]
         role = access["role"]
 
         hierarchy_file = f"{project_id}/data.csv"
-        mapping_file   = f"{project_id}/qText.csv"
+        mapping_file = f"{project_id}/qText.csv"
+
+        logging.info(f"hierarchy_file={hierarchy_file}")
+        logging.info(f"mapping_file={mapping_file}")
 
         rows = get_csv_from_blob(hierarchy_file)
+        logging.info(f"rows_loaded={len(rows)}")
+
         mapping_rows = get_csv_from_blob(mapping_file)
+        logging.info(f"mapping_rows_loaded={len(mapping_rows)}")
 
         tree = build_tree(rows)
+        logging.info("tree built")
+
         filtered_tree = filter_tree(tree, role)
+        logging.info(f"filtered_tree exists={filtered_tree is not None}")
 
         return func.HttpResponse(
             json.dumps({
@@ -240,7 +251,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     except Exception as exc:
-        logging.exception("Unhandled exception in /api/me")
+        import traceback
+        return func.HttpResponse(
+            traceback.format_exc(),
+            status_code=500,
+            mimetype="text/plain"
+        )
 
         body = {"error": "Internal server error"}
         if APP_ENV == "development":
