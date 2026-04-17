@@ -154,3 +154,6 @@ __pycache__/
 
 # local settings
 **/local.settings.json
+
+# Claude Code
+.claude/settings.local.json

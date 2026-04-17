@@ -37,17 +37,13 @@ def get_user_email(req):
     except Exception:
         return None
 def get_user_access(email):
-    return {
-        "project": "project1",
-        "role": "CEO"
-    }
-
-""" def get_user_access(email):
-
+    # In development, ODBC Driver 18 for SQL Server may not be installed locally.
+    # We skip the DB call and return a hardcoded record so the rest of the app
+    # (blob fetch, tree build, filter) can still be exercised end-to-end.
     if APP_ENV == "development":
         return {
             "project": "project1",
-            "role": "CEO"
+            "role": "/NHS"
         }
 
     conn = get_sql_connection()
@@ -66,7 +62,7 @@ def get_user_access(email):
     return {
         "project": row[0],
         "role": row[1]
-    } """
+    }
 
 # -----------------------------------
 # DATASET ACCESS (SQL optional)
@@ -212,21 +208,9 @@ def build_tree(rows):
 # -----------------------------------
 def filter_tree(node, role):
 
-    role_map = {
-        "CEO": "/NHS",
-        "CFO": "/NHS/NHS England/Region1",
-        "HR": "/NHS/NHS England/Region1/Trust1"
-    }
-
-    allowed_path = role_map.get(role)
-
-    # CEO sees full tree
-    if role == "CEO":
-        return node
-
-    # Depth-first search to FIND the allowed node
+    # role is now a hierarchy path e.g. "/NHS/NHS England"
     def find_node(n):
-        if n.get("path") == allowed_path:
+        if n.get("path") == role:
             return n
 
         for child in n.get("children", []):
@@ -297,21 +281,3 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=500,
             mimetype="application/json"
         )
-
-""" def main(req: func.HttpRequest) -> func.HttpResponse:
-    try:
-        rows = get_csv_from_blob("project1/data.csv")
-
-        return func.HttpResponse(
-            json.dumps({
-                "rows_loaded": len(rows)
-            }),
-            status_code=200,
-            mimetype="application/json"
-        )
-
-    except Exception as e:
-        return func.HttpResponse(
-            json.dumps({"error": str(e)}),
-            status_code=500
-        )  """

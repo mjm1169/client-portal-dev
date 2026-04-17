@@ -257,7 +257,7 @@ body {
   z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .chart-loading {
@@ -267,6 +267,75 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+}
+
+/* ===============================
+   LOGIN PAGE
+================================ */
+
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  background: #f4f5f9;
+  padding: var(--space-lg);
+}
+
+.login-card {
+  background: white;
+  border: 1px solid var(--color-border);
+  padding: clamp(32px, 6vw, 56px);
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.login-logo {
+  height: 52px;
+  width: auto;
+  margin-bottom: var(--space-sm);
+}
+
+.login-title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+  text-align: center;
+}
+
+.login-subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-align: center;
+  line-height: 1.5;
+  margin: 0 0 var(--space-sm);
+}
+
+.login-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+  padding: 11px 20px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: white;
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.login-btn:hover {
+  background: #0d1440;
+  border-color: #0d1440;
 }
 
 /* ===============================
@@ -354,7 +423,7 @@ body {
 .chart-controls {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
   background: rgba(255,255,255,0.9);
   padding: 12px;
   border: none;
@@ -415,6 +484,7 @@ body {
   font-size: 12px;
   line-height: 1.4;
   color: #444;
+  padding: 0 12px;
 }
 
 .chart-legend-item {

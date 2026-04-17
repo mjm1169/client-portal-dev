@@ -514,6 +514,28 @@ function drawChart(data, scores, onReady = () => {}) {
   const colorScale = d3.scaleThreshold()
     .domain([50, 60, 70])
     .range(colors);
+  
+    const labels = [
+      'Scores below 50',
+      'Scores 50-60',
+      'Scores 60-70',
+      'Scores above 70',
+      'Redacted',
+    ];
+
+  // Render legend into the chart overlay (top-left of chart pane)
+  (function renderOverlayLegend() {
+    const legendEl = document.getElementById('chartLegend');
+    if (!legendEl) return;
+
+    const items = colors.map((c, i) => ({ color: c, label: labels[i] })).filter(d => d.label);
+    legendEl.innerHTML = items.map(d =>
+      `<div class="chart-legend-item">
+         <span class="chart-legend-swatch" style="background:${d.color}"></span>
+         <span class="chart-legend-label">${d.label}</span>
+       </div>`
+    ).join('');
+  })();
 
   const arc = d3.arc()
     .startAngle(d => d.x0)
