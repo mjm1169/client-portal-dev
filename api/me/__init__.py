@@ -181,16 +181,27 @@ def filter_tree(node, role):
     return find_node(node)
 
 # -----------------------------------
-# FORMAT SCORE MAPPING
+# SCORE LABELS
 # -----------------------------------
-def format_score_mapping(rows):
-    return [
-        {
-            "id": row.get("QID"),
-            "label": row.get("Qtext")
-        }
-        for row in rows
-    ]
+def extract_labels(rows):
+    """Remove the __labels__ row from rows in-place and return a {col: label} map."""
+    for i, row in enumerate(rows):
+        if row.get("Level0", "").strip() == "__labels__":
+            label_map = {
+                key: val.strip()
+                for key, val in row.items()
+                if val and val.strip() and key.lower().startswith("score")
+            }
+            rows.pop(i)
+            return label_map
+    return {}
+
+def build_scores_list(rows, label_map):
+    """Return [{id, label}] for every score column, using label_map or falling back to the column name."""
+    if not rows:
+        return []
+    score_columns = [col for col in rows[0].keys() if col.lower().startswith("score")]
+    return [{"id": sc, "label": label_map.get(sc, sc)} for sc in score_columns]
 
 # -----------------------------------
 # MAIN
@@ -221,10 +232,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         role = access["role"]
 
         hierarchy_file = f"{project_id}/data.csv"
-        mapping_file   = f"{project_id}/qText.csv"
 
         rows = get_csv_from_blob(hierarchy_file)
-        mapping_rows = get_csv_from_blob(mapping_file)
+        label_map = extract_labels(rows)
+        scores = build_scores_list(rows, label_map)
 
         tree = build_tree(rows)
         filtered_tree = filter_tree(tree, role)
@@ -232,7 +243,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             json.dumps({
                 "tree": filtered_tree,
-                "scores": format_score_mapping(mapping_rows),
+                "scores": scores,
                 "projects": [a["project"] for a in access_list],
                 "currentProject": project_id
             }),
