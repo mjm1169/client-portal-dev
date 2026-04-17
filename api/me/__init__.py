@@ -239,11 +239,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             mimetype="application/json"
         )
 
-    except Exception:
+    except Exception as exc:
         logging.exception("Unhandled exception in /api/me")
 
+        body = {"error": "Internal server error"}
+        if APP_ENV == "development":
+            import traceback
+            body["detail"] = traceback.format_exc()
+
         return func.HttpResponse(
-            json.dumps({"error": "Internal server error"}),
+            json.dumps(body),
             status_code=500,
             mimetype="application/json"
         )
