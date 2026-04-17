@@ -42,7 +42,8 @@ def get_user_access(email):
     # (blob fetch, tree build, filter) can still be exercised end-to-end.
     if APP_ENV == "development":
         return [
-            {"project": "project1", "role": "/NHS"}
+            {"project": "project1", "role": "/NHS"},
+            {"project": "project2", "role": "/Zippy"}
         ]
 
     conn = get_sql_connection()

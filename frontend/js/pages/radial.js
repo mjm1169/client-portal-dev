@@ -66,7 +66,7 @@ function renderLayout(container) {
         <div class="chart-overlay">
           <div class="chart-controls">
             <div class="control-group">
-              <label for="scoreSelector">Score</label>
+              <label for="scoreSelector">Select the question you'd like to view</label>
               <select id="scoreSelector"></select>
             </div>
             <div class="control-actions">
@@ -166,8 +166,8 @@ async function loadData(container, user, projectId = null) {
 }
 
 function renderProjectDropdown(container, projects, currentProject, onChange) {
-  const actions = container.querySelector('.control-actions');
-  if (!actions) return;
+  const controls = container.querySelector('.chart-controls');
+  if (!controls) return;
 
   let select = container.querySelector('#projectSelector');
   if (select) {
@@ -177,7 +177,6 @@ function renderProjectDropdown(container, projects, currentProject, onChange) {
 
   select = document.createElement('select');
   select.id = 'projectSelector';
-  select.className = 'project-selector';
 
   projects.forEach(p => {
     const opt = document.createElement('option');
@@ -188,7 +187,18 @@ function renderProjectDropdown(container, projects, currentProject, onChange) {
   });
 
   select.addEventListener('change', () => onChange(select.value));
-  actions.appendChild(select);
+
+  const group = document.createElement('div');
+  group.className = 'control-group';
+
+  const label = document.createElement('label');
+  label.htmlFor = 'projectSelector';
+  label.textContent = 'Select which project you\'d like to view';
+
+  group.appendChild(label);
+  group.appendChild(select);
+
+  controls.insertBefore(group, controls.firstElementChild);
 }
 
 // ---------------------------------------------------------------------------
@@ -494,6 +504,60 @@ function downloadSVG() {
     }
 
     const clonedSvg = svgEl.cloneNode(true);
+
+    // --- title (selected score label) ---
+    const scoreSelector = document.getElementById('scoreSelector');
+    const selectedLabel = scoreSelector?.options[scoreSelector.selectedIndex]?.text || '';
+
+    // --- legend items from rendered DOM ---
+    const legendItems = [...document.querySelectorAll('#chartLegend .chart-legend-item')].map(item => ({
+      color: item.querySelector('.chart-legend-swatch').style.backgroundColor,
+      label: item.querySelector('.chart-legend-label').textContent
+    }));
+
+    // Expand viewBox: add 50 units above for title + legend
+    const titlePad = 50;
+    clonedSvg.setAttribute('viewBox', `-400 ${-400 - titlePad} 800 ${800 + titlePad}`);
+
+    // Title text — top-left
+    if (selectedLabel) {
+      const titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      titleEl.setAttribute('x', '-390');
+      titleEl.setAttribute('y', String(-400 - 28));
+      titleEl.setAttribute('text-anchor', 'start');
+      titleEl.setAttribute('font-family', 'Barlow, sans-serif');
+      titleEl.setAttribute('font-size', '18');
+      titleEl.setAttribute('fill', '#333');
+      titleEl.textContent = selectedLabel;
+      clonedSvg.appendChild(titleEl);
+    }
+
+    // Legend items — top-left, below title
+    const swatchSize  = 14;
+    const itemHeight  = 22;
+    const legendStartX = -390;
+    const legendStartY = -400 - titlePad + 42;
+
+    legendItems.forEach(({ color, label }, i) => {
+      const y = legendStartY + i * itemHeight;
+
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x',      String(legendStartX));
+      rect.setAttribute('y',      String(y));
+      rect.setAttribute('width',  String(swatchSize));
+      rect.setAttribute('height', String(swatchSize));
+      rect.setAttribute('fill',   color);
+      clonedSvg.appendChild(rect);
+
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x',           String(legendStartX + swatchSize + 8));
+      text.setAttribute('y',           String(y + swatchSize - 2));
+      text.setAttribute('font-family', 'Barlow, sans-serif');
+      text.setAttribute('font-size',   '14');
+      text.setAttribute('fill',        '#333');
+      text.textContent = label;
+      clonedSvg.appendChild(text);
+    });
 
     const fontCSS = `
       <style>
