@@ -69,48 +69,9 @@ def get_sql_connection():
     return pyodbc.connect(conn_str)
 
 
-""" def get_dataset_for_user(email):
-
-    if APP_ENV == "development":
-        return "data1.csv"
-
-    conn = get_sql_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT projectId FROM UserDatasetAccess WHERE email = ?",
-        #SELECT datasetFile FROM UserDatasetAccess WHERE email = ?,
-        email
-    )
-
-    row = cursor.fetchone()
-    return row[0] if row else None """
-
 # -----------------------------------
 # BLOB ACCESS
 # -----------------------------------
-""" def get_dataset_from_blob(filename):
-    conn_str = os.environ["BLOB_CONNECTION_STRING"]
-    container_name = os.environ["BLOB_CONTAINER_NAME"]
-
-    blob_service_client = BlobServiceClient.from_connection_string(conn_str)
-    blob_client = blob_service_client.get_blob_client(
-        container=container_name,
-        blob=filename
-    )
-
-    blob_data = blob_client.download_blob().readall()
-
-    text = blob_data.decode("utf-8-sig")
-    csv_file = io.StringIO(text)
-
-    sample = csv_file.read(1024)
-    csv_file.seek(0)
-
-    dialect = csv.Sniffer().sniff(sample)
-    reader = csv.DictReader(csv_file, dialect=dialect)
-
-    return list(reader) """
 def get_csv_from_blob(blob_path):
     conn_str = os.environ["BLOB_CONNECTION_STRING"]
     container_name = os.environ["BLOB_CONTAINER_NAME"]

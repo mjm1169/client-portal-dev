@@ -1,44 +1,17 @@
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
-/* export function mountRadial(container, user) {
-
-  container.innerHTML = `
-  <div class="app">
-
-
-      <h2>Radial Hierarchy</h2>
-
-      <div style="padding:10px;">
-        <label for="datasetSelect">Dataset:</label>
-        <select id="datasetSelect"></select>
-        <select id="scoreSelector">
-          <option value="Score1">Score1</option>
-          <option value="Score2">Score2</option>
-        </select>
-      </div>
-
-
-      <div id="chart"></div>
-
-
-
-  </div>
-`;
-  initCardCarousel();
-  loadData(user);
-}
- */
 export function mountRadial(container, user) {
   renderLayout(container);
   initCardCarousel(container);
-  setTimeout(() => loadData(container, user), 0);  // defer until after browser paints
+  setTimeout(() => loadData(container, user), 0);
 }
-//<div class="app" style="display:grid; grid-template-columns:300px 1fr;">
+
+// ---------------------------------------------------------------------------
+// Layout
+// ---------------------------------------------------------------------------
 function renderLayout(container) {
   container.innerHTML = `
-    
     <div class="app">
-      <!-- Left pane: 5-card walkthrough -->
       <aside class="side-pane" aria-label="Chart explanation">
         <div class="card-carousel">
           <div class="card-stage">
@@ -56,7 +29,7 @@ function renderLayout(container) {
               <h2>Labels</h2>
               <p>Labels appear on segments where space allows. As the chart scales down, labels scale with it to preserve proportion.</p>
               <h2>Tips</h2>
-              <p>If you’re presenting this, keep the chart visible while stepping through these cards using Back / Next.</p>
+              <p>If you're presenting this, keep the chart visible while stepping through these cards using Back / Next.</p>
               <p>On smaller screens, the cards area scrolls if needed.</p>
             </section>
 
@@ -83,35 +56,27 @@ function renderLayout(container) {
 
           <div class="card-nav" aria-label="Card navigation">
             <button type="button" id="prevCard">Back</button>
-
             <div class="card-dots" id="cardDots" aria-label="Card position"></div>
-
             <button type="button" id="nextCard">Next</button>
           </div>
         </div>
       </aside>
 
-      <!-- Right pane: chart -->
       <main class="chart-pane" aria-label="Chart">
         <div class="chart-overlay">
           <div class="chart-controls">
-
             <div class="control-group">
               <label for="scoreSelector">Score</label>
               <select id="scoreSelector"></select>
             </div>
-
             <div class="control-actions">
               <button id="resetButton" class="btn-secondary">Show root</button>
               <button id="downloadSVG" class="btn-secondary">Download</button>
             </div>
-
           </div>
-
           <div class="chart-status" id="chartStatus"></div>
           <div class="chart-legend" id="chartLegend"></div>
         </div>
-
         <div id="chart">
           <div class="chart-loading">Loading chart…</div>
         </div>
@@ -120,18 +85,20 @@ function renderLayout(container) {
   `;
 }
 
+// ---------------------------------------------------------------------------
+// Card carousel
+// ---------------------------------------------------------------------------
 function initCardCarousel(container) {
   const cards = Array.from(container.querySelectorAll('.info-card'));
   if (!cards.length) return;
 
   const prevBtn = container.querySelector('#prevCard');
   const nextBtn = container.querySelector('#nextCard');
-  const dotsEl = container.querySelector('#cardDots');
+  const dotsEl  = container.querySelector('#cardDots');
 
   let idx = cards.findIndex(c => c.classList.contains('active'));
   if (idx === -1) idx = 0;
 
-  // Build dots
   dotsEl.innerHTML = '';
   cards.forEach((_, i) => {
     const dot = document.createElement('button');
@@ -141,16 +108,10 @@ function initCardCarousel(container) {
   });
 
   function render() {
-    cards.forEach((c, i) => {
-      c.classList.toggle('active', i === idx);
-    });
-
+    cards.forEach((c, i) => c.classList.toggle('active', i === idx));
     prevBtn.disabled = idx === 0;
     nextBtn.disabled = idx === cards.length - 1;
-
-    Array.from(dotsEl.children).forEach((d, i) => {
-      d.classList.toggle('active', i === idx);
-    });
+    Array.from(dotsEl.children).forEach((d, i) => d.classList.toggle('active', i === idx));
   }
 
   function setIdx(i) {
@@ -160,20 +121,12 @@ function initCardCarousel(container) {
 
   prevBtn.addEventListener('click', () => setIdx(idx - 1));
   nextBtn.addEventListener('click', () => setIdx(idx + 1));
-
   render();
 }
 
-/* function loadData(container, user) {
-  const chartEl = container.querySelector('#chart');
-
-  chartEl.innerHTML = `
-    <div style="padding:20px;">
-      Chart will render here
-    </div>
-  `;
-} */
-
+// ---------------------------------------------------------------------------
+// Data loading
+// ---------------------------------------------------------------------------
 async function loadData(container, user, projectId = null) {
   try {
     if (!user.userDetails) {
@@ -182,11 +135,9 @@ async function loadData(container, user, projectId = null) {
     }
 
     const chartEl = container.querySelector('#chart');
-    console.log("loadData started, chartEl contents:", chartEl.innerHTML);
-
     const url = projectId ? `/api/me?project=${encodeURIComponent(projectId)}` : `/api/me`;
     const res = await fetch(url);
-    console.log("fetch resolved");
+
     if (!res.ok) {
       if (res.status === 401) {
         window.location.href = "/.auth/login/aad";
@@ -202,12 +153,11 @@ async function loadData(container, user, projectId = null) {
     const data = await res.json();
 
     if (data.projects && data.projects.length > 1) {
-      renderProjectDropdown(container, data.projects, data.currentProject, (selected) => {
+      renderProjectDropdown(container, data.projects, data.currentProject, selected => {
         loadData(container, user, selected);
       });
     }
 
-    console.log("about to draw chart, chartEl contents:", chartEl.innerHTML);
     requestAnimationFrame(() => drawChart(data.tree, data.scores, chartEl));
 
   } catch (err) {
@@ -219,7 +169,6 @@ function renderProjectDropdown(container, projects, currentProject, onChange) {
   const actions = container.querySelector('.control-actions');
   if (!actions) return;
 
-  // Update existing dropdown rather than adding a second one
   let select = container.querySelector('#projectSelector');
   if (select) {
     select.value = currentProject;
@@ -242,138 +191,58 @@ function renderProjectDropdown(container, projects, currentProject, onChange) {
   actions.appendChild(select);
 }
 
+// ---------------------------------------------------------------------------
+// Chart
+// ---------------------------------------------------------------------------
 function drawChart(data, scores, chartEl) {
-  console.log(data)
-  const chart = chartEl;                     // ← use passed element
-
+  const chart = chartEl;
   chart.innerHTML = "";
-  const size = 800;
-  const width = size;
-  const height = size;
-  const radius = size / 2;
 
-  const levelWidth = radius / 3.5;
+  const size             = 800;
+  const radius           = size / 2;
+  const levelWidth       = radius / 3.5;
   const radiusOuterScale = 0.1;
-  const threshVal = 5;
-  console.log("drawChart called");
-  //console.log("Rows:", rows.length);
+  const threshVal        = 5;
 
-  // Clear previous chart
-  d3.select(chart).html("");
-
-  // -----------------------------
-  // Build hierarchy
-  // -----------------------------
-  
-  console.log("Building hierarchy...");
-  
   let hierarchyData = data;
-
-  // Remove fake root if it only has one child
   if (
     hierarchyData.name === "Root" &&
     hierarchyData.children &&
     hierarchyData.children.length === 1
   ) {
-    console.log("Promoting child as root:", hierarchyData.children[0].name);
     hierarchyData = hierarchyData.children[0];
   }
-
-  console.log("Hierarchy built:", hierarchyData);
 
   if (!hierarchyData.children || hierarchyData.children.length === 0) {
     console.error("No children in hierarchyData");
     return;
   }
 
-  //function cleanSizes(node) {
-//
-  //  if (!node.children || node.children.length === 0) {
-  //    node.size = 0; // leaves
-  //  } else {
-  //    node.children.forEach(cleanSizes);
-  //  }
-  //}
-  console.log(hierarchyData);
-  // -----------------------------
-  // Convert to D3 hierarchy
-  // -----------------------------
-  //cleanSizes(hierarchyData);
-
-  console.log("hierarchyData",hierarchyData)
-  // Stage 1: compute values
-
-  // Stage 1: build hierarchy
   const hierarchyRoot = d3.hierarchy(hierarchyData)
-  .sum(d => +d.size || 0)
-  .sort((a, b) => b.value - a.value);
+    .sum(d => +d.size || 0)
+    .sort((a, b) => b.value - a.value);
 
-  console.log("hierarchyRoot:", hierarchyRoot);
-
-
-  // Stage 2: create partition generator
   const partition = d3.partition()
-    .size([2 * Math.PI, hierarchyRoot.height + 1])
-  //.size([2 * Math.PI, radius]);
+    .size([2 * Math.PI, hierarchyRoot.height + 1]);
 
-
-  // Stage 3: apply partition
   const root = partition(hierarchyRoot);
 
-  console.log("partitioned root:", root);
-
-
-  // Stage 4: initialize current for animation
   root.each(d => {
-    d.base = {      // ← permanent geometry
-      x0: d.x0,
-      x1: d.x1,
-      y0: d.y0,
-      y1: d.y1
-    };
-  
-    d.current = d.base; // start here
+    d.base    = { x0: d.x0, x1: d.x1, y0: d.y0, y1: d.y1 };
+    d.current = d.base;
   });
 
+  const colors = ["#71769c", "#a0a4bd", "#a5dfde", "#1dafad"];
 
-  // Debug: check leaf sizes
-  root.leaves().forEach(d => {
-  console.log("Leaf:", d.data.name, "size:", d.data.size, "value:", d.value);
-  });
-
-  
-
-  console.log("Chart size:", width, height, radius);
-
-  // -----------------------------
-  // Colour scale (using Score1)
-  // -----------------------------
-
-  const colors = [
-    "#71769c", // <50
-    "#a0a4bd", // 50-59
-    "#a5dfde", // 60-69
-    "#1dafad"  // >=70
-  ];
-
-  const colorScale = d3
-    .scaleThreshold()
+  const colorScale = d3.scaleThreshold()
     .domain([50, 60, 70])
     .range(colors);
-    
-    const labels = [
-      'Scores below 50',
-      'Scores 50-60',
-      'Scores 60-70',
-      'Scores above 70',
-      'Redacted',
-    ];
 
-  // Render legend into the chart overlay (top-left of chart pane)
+  const labels = ['Scores below 50', 'Scores 50-60', 'Scores 60-70', 'Scores above 70', 'Redacted'];
+
   (function renderOverlayLegend() {
     const legendEl = document.getElementById('chartLegend');
     if (!legendEl) return;
-
     const items = colors.map((c, i) => ({ color: c, label: labels[i] })).filter(d => d.label);
     legendEl.innerHTML = items.map(d =>
       `<div class="chart-legend-item">
@@ -383,416 +252,239 @@ function drawChart(data, scores, chartEl) {
     ).join('');
   })();
 
-  // -----------------------------
-  // Arc generator
-  // -----------------------------
-  const maxDepth = root.height + 1;
-  console.log("Max depth:", maxDepth);
-  root.descendants().forEach(d => {
-    if (!d.y1 || !d.y0) {
-      console.warn("Bad node:", d);
-    }
-  });
-  console.log(
-    "Clickable nodes:",
-    root.descendants().filter(d => d.children).length
-  );
-  // Compress outer layers
-
-
   const arc = d3.arc()
-  .startAngle(d => d.x0)
-  .endAngle(d => {
-    const diff = d.x1 - d.x0;
-  
-    // if arc is effectively a full circle, trim slightly
-    return diff >= 2 * Math.PI - 1e-6
-      ? d.x1 - 1e-4
-      : d.x1;
-  })
-  .padAngle(d => d.depth === 0 ? 0 : Math.min((d.x1 - d.x0) / 2, 0.005))
-  .padRadius(levelWidth / 2)
-  .innerRadius(d =>
-    d.y0 <= 3
-      ? d.y0 * levelWidth
-      : (3 + (d.y0 - 3) * radiusOuterScale) * levelWidth
-  )
-  .outerRadius(d =>
-    d.y1 <= 3
-      ? d.y1 * levelWidth
-      : (3 + (d.y1 - 3) * radiusOuterScale) * levelWidth
-  )
-  //.attr("stroke", d => d.depth === 0 ? "none" : "#fff");
-  // -----------------------------
-  // SVG
-  // -----------------------------
-    
+    .startAngle(d => d.x0)
+    .endAngle(d => {
+      const diff = d.x1 - d.x0;
+      return diff >= 2 * Math.PI - 1e-6 ? d.x1 - 1e-4 : d.x1;
+    })
+    .padAngle(d => d.depth === 0 ? 0 : Math.min((d.x1 - d.x0) / 2, 0.005))
+    .padRadius(levelWidth / 2)
+    .innerRadius(d =>
+      d.y0 <= 3 ? d.y0 * levelWidth : (3 + (d.y0 - 3) * radiusOuterScale) * levelWidth
+    )
+    .outerRadius(d =>
+      d.y1 <= 3 ? d.y1 * levelWidth : (3 + (d.y1 - 3) * radiusOuterScale) * levelWidth
+    );
+
   const svg = d3.select(chart)
     .append("svg")
     .attr("viewBox", [-size / 2, -size / 2, size, size])
     .attr("width",  "100%")
-    .attr("height",  "100%")
+    .attr("height", "100%")
     .style("max-width", "100%")
     .style("height", "auto");
-  const g = svg.append("g")
-    .attr("transform", `translate(0,0)`);
-  
-  const pathGroup = g.append("g").attr("class", "paths");
+
+  const g          = svg.append("g").attr("transform", "translate(0,0)");
+  const pathGroup  = g.append("g").attr("class", "paths");
   const labelGroup = g.append("g")
     .attr("class", "labels")
     .style("pointer-events", "none");
-/*   const centerCircle = svg
+
+  const labelSize = d => {
+    const angularSpan   = d.x1 - d.x0;
+    const radialMid     = ((d.y0 + d.y1) / 2) * levelWidth;
+    const radialWidth   = (d.y1 - d.y0) * levelWidth;
+    const chars         = d.data.name.length;
+    const arcLength     = angularSpan * radialMid;
+    const charWidth     = 0.9 + (chars * 0.001);
+    const sizeFromArc   = arcLength * 0.5;
+    const sizeFromWidth = radialWidth / (chars * charWidth);
+    return Math.min(Math.max(Math.min(sizeFromArc, sizeFromWidth), 6), 14);
+  };
+
+  const path = pathGroup
+    .selectAll("path")
+    .data(root.descendants())
+    .join("path")
+    .attr("d", d => arc(d.current))
+    .attr("pointer-events", "all")
+    .attr("fill", d => {
+      const v = d.data.scores?.Score1;
+      if (v == null || isNaN(v)) return "#ddd";
+      return colorScale(v);
+    })
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 0.5)
+    .attr("stroke-linejoin", "round")
+    .attr("stroke-linecap", "round");
+
+  path
+    .filter(d => d.children && d.children.length)
+    .style('cursor', 'pointer')
+    .on('click', clicked);
+
+  const format = d3.format(',d');
+  path.append('title').text(d =>
+    `${d.ancestors().map(d => d.data.name).reverse().join('/')}\n${format(d.value)}`
+  );
+  path.raise();
+
+  const centerText = svg
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', '0.35em')
+    .style('fill', 'black')
+    .style('pointer-events', 'none')
+    .attr('pointer-events', 'none')
+    .text(`${root.data.name}: ${root.data.scores.Score1 || 0}%`);
+
+  const label = labelGroup
+    .attr('id', 'scoresLabels')
+    .attr('pointer-events', 'none')
+    .style('pointer-events', 'none')
+    .attr('text-anchor', 'middle')
+    .style('user-select', 'none')
+    .selectAll('text')
+    .data(root.descendants())
+    .join('text')
+    .style("font-size", d => `${labelSize(d)}`)
+    .attr('dy', '0.35em')
+    .attr('fill-opacity', d => +labelVisible(d.current))
+    .attr('transform', d => labelTransform(d.current))
+    .text(d =>
+      (d.data.scores.Score1 || 0) > threshVal
+        ? `${d.data.name}: ${d.data.scores.Score1 || 0}%`
+        : `${d.data.name}: Redacted`
+    );
+
+  const parent = svg
     .append('circle')
+    .datum(root)
     .attr('r', levelWidth)
-    .attr('fill', colorScale(root.data.scores.Score1 || 0)); */
-    function radiusScale(d) {
+    .attr('fill', 'transparent')
+    .attr('pointer-events', 'all')
+    .style('cursor', 'pointer')
+    .on('click', clicked);
 
-      if (d <= 3) {
-        return d * levelWidth * 1.4; // inner = bigger
-      }
-    
-      return (3 * levelWidth * 1.4) + (d - 3) * levelWidth * 0.7;
-    }
+  let currentNode = root;
 
-    const path = pathGroup
-      .selectAll("path")
-      .data(root.descendants())
-      .join("path")
-      .attr("d", d => arc(d.current))
-      .attr("pointer-events", "all")
-      .attr("fill", d => {
-        const v = d.data.scores?.Score1;
-        if (v == null || isNaN(v)) return "#ddd";
-        return colorScale(v);
-      })
-      //.attr("stroke", d => d.depth === 0 ? "none" : "#fff")  // 👈 HERE
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 0.5)
-      .attr("stroke-linejoin", "round")
-      .attr("stroke-linecap", "round")
+  populateScoreDropdown(scores, selectedScore => {
+    clicked(null, currentNode, selectedScore);
+  });
+
+  clicked(null, currentNode, d3.select('#scoreSelector').property('value'));
+
+  function clicked(event, p, selectedScore = d3.select('#scoreSelector').property('value')) {
+    currentNode = p;
+    parent.datum(p.parent || root);
+    updateCurrentLevelsText(p);
+
+    root.each(d => (d.target = {
+      x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+      x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+      y0: Math.max(0, d.y0 - p.depth),
+      y1: Math.max(0, d.y1 - p.depth)
+    }));
+
+    const currentSelScore = d3.select('#scoreSelector').property('value');
+    centerText.raise();
+    centerText.text(`${p.data.name}: ${p.data.scores[currentSelScore] || 0}%`);
+
+    const t = svg.transition().duration(750);
+
+    document.getElementById('resetButton').addEventListener('click', () => {
+      clicked(null, root);
+    });
+
+    const newColorScale = d3.scaleThreshold()
+      .domain([50, 60, 70, 100])
+      .range([colors[0], colors[1], colors[2], colors[3]]);
 
     path
-      .filter(d => d.children && d.children.length)
-      .style('cursor', 'pointer')
-      .on('click', clicked);
+      .transition(t)
+      .attr('fill', d => newColorScale(d.data.scores[selectedScore] || 0))
+      .attr("stroke", d => (d.depth === p.depth ? "none" : "#fff"))
+      .tween('data', d => {
+        const i = d3.interpolate(d.current, d.target);
+        return tVal => (d.current = i(tVal));
+      })
+      .attr("pointer-events", d => d.children ? "auto" : "none")
+      .attrTween('d', d => () => arc(d.current));
 
-    const format = d3.format(',d');
-    path.append('title').text(
-      (d) =>
-        `${d
-          .ancestors()
-          .map((d) => d.data.name)
-          .reverse()
-          .join('/')}\n${format(d.value)}`,
-    );
-    path.raise();
-    const centerText = svg
-      .append('text')
-      .attr('text-anchor', 'middle')
-      .attr('dy', '0.35em')
-      .style('fill', 'black')
-      .style('pointer-events', 'none')
-      .attr('pointer-events', 'none')
-
-      .text(`${root.data.name}: ${root.data.scores.Score1 || 0}%`);
-      const labelSize = d => {
-        const angularSpan = d.x1 - d.x0;
-        const radialMid = ((d.y0 + d.y1) / 2) * levelWidth;
-        const radialWidth = (d.y1 - d.y0) * levelWidth;
-        const chars = d.data.name.length;
-      
-        const arcLength = angularSpan * radialMid;
-        const charWidth = 0.9 + (chars * 0.001); // slightly wider assumption for longer labels
-        const heightRatio = 0.5; // tune to fix small-arc labels (% of ring used by text height)
-        const sizeFromArc = arcLength * heightRatio;
-        const sizeFromWidth = radialWidth / (chars * charWidth);
-
-        return Math.min(Math.max(Math.min(sizeFromArc, sizeFromWidth), 6), 14);
-      };
-
-    const label = labelGroup
-      .attr('id', 'scoresLabels')
-      .attr('pointer-events', 'none')
-      .style('pointer-events', 'none')
-      .attr('text-anchor', 'middle')
-      .style('user-select', 'none')
-      .selectAll('text')
-      .data(root.descendants())
-      .join('text')
-      .style("font-size", d => `${labelSize(d)}`)
-      .attr('dy', '0.35em')
-      .attr('fill-opacity', (d) => +labelVisible(d.current))
-      .attr('transform', (d) => labelTransform(d.current))
-      .text((d) =>
-        (d.data.scores.Score1 || 0) > threshVal
-          ? `${d.data.name}: ${d.data.scores.Score1 || 0}%`
-          : `${d.data.name}: Redacted`,
+    label
+      .filter(function(d) {
+        return +this.getAttribute('fill-opacity') || labelVisible(d.target);
+      })
+      .transition(t)
+      .attr('fill-opacity', d => +labelVisible(d.target))
+      .attrTween('transform', d => () => labelTransform(d.current))
+      .text(d =>
+        d.data.scores[selectedScore] > threshVal
+          ? `${d.data.name}: ${d.data.scores[selectedScore] || 0}%`
+          : `${d.data.name}: Redacted`
       );
 
-    const parent = svg
-      .append('circle')
-      .datum(root)
-      .attr('r', levelWidth)
-      .attr('fill', 'transparent')
-      .attr('pointer-events', 'all')
-      .style('cursor', 'pointer')
-      //.lower() // 👈 keep behind arcs
-      .on('click', clicked);
-
-    // Function to find a node by name
-    function findNodeByName(name) {
-      return root.descendants().find((d) => d.data.name === name);
-    }    
-    
-   //function cardNavigation(event){
-   //  const idx = Array.from(document.querySelectorAll('.info-card')).findIndex(c => c.classList.contains('active'));
-   //  console.log('Current card index:', idx);
-   //  if([1,2,3,4].includes(idx)){ // Prevent action if already on the first card
-   //    const storyStates = [{storyNodeName: "Region1",storyScore: 'Score1'},
-   //                         {storyNodeName: "NHS England",storyScore: 'Score2'},
-   //                         {storyNodeName: "Region3",storyScore: 'Score3'},
-   //                         {storyNodeName: "NHS",storyScore: 'Score1'}]
-   //    const storyNodeName = storyStates[idx-1].storyNodeName;
-   //    const storyScore = storyStates[idx-1].storyScore;
-   //    clicked(null,findNodeByName(storyNodeName),storyScore); 
-   //    updateCurrentLevelsText(findNodeByName(storyNodeName));
-   //    scoreSelector.value = storyScore;
-   //    scoreSelector.dispatchEvent(new Event('change'));
-   //  }
-   //}
-   //document.getElementById('nextCard').addEventListener('click', cardNavigation);
-   //document.getElementById('prevCard').addEventListener('click', cardNavigation);
-
-
-
-    function clicked(event, p,selectedScore=d3.select('#scoreSelector').property('value')) {
-      //console.log(p)
-      //console.log(selectedScore)
-      currentNode = p; // Update the reference to the current node
-      console.log("Clicked node:", p.data.name, "Score:", p.data.scores[selectedScore]);
-      parent.datum(p.parent || root);
-      //updateChart(selectedScore, p);
-        updateCurrentLevelsText(p);
-        //svg.selectAll('path.background-circle').remove();
-  
-        root.each(
-          (d) =>
-            (d.target = {
-              x0:
-                Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) *
-                2 *
-                Math.PI,
-              x1:
-                Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) *
-                2 *
-                Math.PI,
-              y0: Math.max(0, d.y0 - p.depth),
-              y1: Math.max(0, d.y1 - p.depth)
-            }),
-        );
-  
-        const currentSelScore = d3.select('#scoreSelector').property('value');
-        //console.log(currentSelScore); // Log the current selected value
-        centerText.raise();
-        centerText.text(
-          `${p.data.name}: ${p.data.scores[currentSelScore] || 0}%`,
-        );
-        const t = svg.transition().duration(750);
-
-        document.getElementById('resetButton').addEventListener('click', () => {
-          clicked(null, root);
-        });
-/*         centerCircle
-          .datum(p)
-          .transition(t)
-          .attr('fill', d => colorScale(d.data.scores[selectedScore] || 0)); */
-        
-         
-        const newColorScale = d3
-          .scaleThreshold()
-          .domain([50, 60, 70, 100])
-          .range([colors[0], colors[1], colors[2], colors[3]]);
-        
-          path
-            .transition(t)
-            .attr('fill', d => newColorScale(d.data.scores[selectedScore] || 0))
-            .attr("stroke", d => (d.depth === p.depth ? "none" : "#fff"))
-            .tween('data', (d) => {
-              const i = d3.interpolate(d.current, d.target);
-              return (tVal) => (d.current = i(tVal));
-            })
-            .attr("pointer-events", d => d.children ? "auto" : "none")
-            .attrTween('d', (d) => {
-              return () => arc(d.current);
-            });
-  
-          label
-          .filter(function (d) {
-            return +this.getAttribute('fill-opacity') || labelVisible(d.target);
-          })
-          .transition(t)
-          .attr('fill-opacity', (d) => +labelVisible(d.target))
-          .attrTween('transform', (d) => () => labelTransform(d.current))
-          .text((d) =>
-          d.data.scores[selectedScore] > threshVal
-            ? `${d.data.name}: ${d.data.scores[selectedScore] || 0}%`
-            : `${d.data.name}: Redacted`,
-            );
-          label.style("font-size", d => {
-            const proxy = { 
-              x0: d.target.x0, x1: d.target.x1, 
-              y0: d.target.y0, y1: d.target.y1, 
-              data: d.data 
-            };
-            return `${labelSize(proxy)}`;
-          });
-        //labelGroup.raise();
-        path.raise();
-         
-    }
-    const scoreSelector = document.getElementById('scoreSelector');
-  
-/*     scoreSelector.addEventListener('change', function () {
-      const selectedScore = this.value;
-      clicked(null,currentNode,selectedScore);
-    }); */
-  
-    let currentNode = root; // Initialize to root node
-    populateScoreDropdown(scores, (selectedScore) => {
-      clicked(null, currentNode, selectedScore);
-    });
-    clicked(null,currentNode,d3.select('#scoreSelector').property('value')); // Default initialization with Score1
-
-    function arcVisible(d) {
-      return d.y1 <= hierarchyRoot.height + 1 && d.y0 >= 1;
-    }
-    function labelVisible(d) {
-      return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
-    }
-
-    function labelTransform(d) {
-      const x = (((d.x0 + d.x1) / 2) * 180) / Math.PI;
-      const y = ((d.y0 + d.y1) / 2) * levelWidth;
-      return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
-    }
-    
-    function updateCurrentLevelsText(p) {
-      const currentDepth = p.depth;
-      const visibleMaxDepth = computeMaxDepth(p);
-      const visibleLevels = Math.min(visibleMaxDepth, currentDepth + 2);
-      const textContent =
-        currentDepth === visibleLevels
-          ? `Currently showing level ${currentDepth + 1}`
-          : `Currently showing levels ${currentDepth + 1} to ${visibleLevels + 1}`;
-      //const textContent = `Current score: ${p.data.scores.Score1 || 0}`;
-  
-      const el = document.getElementById('chartStatus');
-      if (el) el.textContent = textContent;
-    }
-  
-    function computeMaxDepth(node) {
-      if (!node.children || node.children.length === 0) {
-        return node.depth;
-      }
-      return Math.max(...node.children.map(computeMaxDepth));
-    }
-    // Load score labels from CSV
-/*     fetch('/data/qText.csv')
-    .then(res => {
-      if (!res.ok) throw new Error("Failed to load qText.csv");
-      return res.text();
-    })
-    .then(text => {
-    
-      const data = d3.csvParse(text);
-      
-
-      const dropdown = d3.select('#scoreSelector');
-    
-      // Clear existing
-      dropdown.selectAll('option').remove();
-    
-      // Add options
-      data.forEach(d => {
-        dropdown.append('option')
-          .attr('value', d.QID)
-          .text(d.Qtext);
-      });
-    
-      // Default
-      dropdown.property('value', 'Score1');
-    
-      // Change handler
-      dropdown.on('change', function () {
-      const selectedScore = this.value;
-      clicked(null, currentNode, selectedScore);
+    label.style("font-size", d => {
+      const proxy = { x0: d.target.x0, x1: d.target.x1, y0: d.target.y0, y1: d.target.y1, data: d.data };
+      return `${labelSize(proxy)}`;
     });
 
-    }) 
-    .catch(err => {
-      console.error("Failed to load dropdown labels:", err);
-    });*/
+    path.raise();
+  }
 
-  console.log("Chart rendering complete");
+  function labelVisible(d) {
+    return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
+  }
+
+  function labelTransform(d) {
+    const x = (((d.x0 + d.x1) / 2) * 180) / Math.PI;
+    const y = ((d.y0 + d.y1) / 2) * levelWidth;
+    return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
+  }
+
+  function updateCurrentLevelsText(p) {
+    const currentDepth    = p.depth;
+    const visibleMaxDepth = computeMaxDepth(p);
+    const visibleLevels   = Math.min(visibleMaxDepth, currentDepth + 2);
+    const textContent     = currentDepth === visibleLevels
+      ? `Currently showing level ${currentDepth + 1}`
+      : `Currently showing levels ${currentDepth + 1} to ${visibleLevels + 1}`;
+    const el = document.getElementById('chartStatus');
+    if (el) el.textContent = textContent;
+  }
+
+  function computeMaxDepth(node) {
+    if (!node.children || node.children.length === 0) return node.depth;
+    return Math.max(...node.children.map(computeMaxDepth));
+  }
 }
 
-
-function normalizeKey(k) {
-  return k.replace(/^\uFEFF/, "").trim();
-}
+// ---------------------------------------------------------------------------
+// Score dropdown
+// ---------------------------------------------------------------------------
 function populateScoreDropdown(scores, onChangeCallback) {
   const dropdown = d3.select('#scoreSelector');
-
-  // Clear existing options
   dropdown.selectAll('option').remove();
 
-  // Add options
   scores.forEach(s => {
-    dropdown.append('option')
-      .attr('value', s.id)
-      .text(s.label);
+    dropdown.append('option').attr('value', s.id).text(s.label);
   });
 
-  // Default selection
-  if (scores.length > 0) {
-    dropdown.property('value', scores[0].id);
-  }
+  if (scores.length > 0) dropdown.property('value', scores[0].id);
 
-  // Change handler
-  dropdown.on('change', function () {
-    const selectedScore = this.value;
-
-    if (onChangeCallback) {
-      onChangeCallback(selectedScore);
-    }
+  dropdown.on('change', function() {
+    if (onChangeCallback) onChangeCallback(this.value);
   });
-  document.getElementById("downloadSVG").addEventListener("click", downloadSVG)
+
+  document.getElementById("downloadSVG").addEventListener("click", downloadSVG);
 }
-/**********************************************************
- * HIERARCHY BUILDER
- **********************************************************/
+
+// ---------------------------------------------------------------------------
+// SVG download
+// ---------------------------------------------------------------------------
 function inlineAllStyles(svgNode) {
   const allElements = svgNode.querySelectorAll("*");
-  const svgStyle = window.getComputedStyle(svgNode);
-
-  // Apply styles to root <svg>
+  const svgStyle    = window.getComputedStyle(svgNode);
   for (let i = 0; i < svgStyle.length; i++) {
-      const prop = svgStyle[i];
-      svgNode.style.setProperty(prop, svgStyle.getPropertyValue(prop));
+    svgNode.style.setProperty(svgStyle[i], svgStyle.getPropertyValue(svgStyle[i]));
   }
-
-  // Apply styles to all child elements
   allElements.forEach(el => {
-      const computedStyle = window.getComputedStyle(el);
-      for (let i = 0; i < computedStyle.length; i++) {
-          const prop = computedStyle[i];
-          el.style.setProperty(prop, computedStyle.getPropertyValue(prop));
-      }
+    const cs = window.getComputedStyle(el);
+    for (let i = 0; i < cs.length; i++) el.style.setProperty(cs[i], cs.getPropertyValue(cs[i]));
   });
 }
 
-
-// Function to download SVG with inlined CSS
 function downloadSVG() {
   try {
     const svgEl = document.querySelector("#chart svg");
@@ -803,7 +495,6 @@ function downloadSVG() {
 
     const clonedSvg = svgEl.cloneNode(true);
 
-    // ✅ STEP 1: Embed font
     const fontCSS = `
       <style>
         @font-face {
@@ -812,7 +503,6 @@ function downloadSVG() {
           font-weight: 400;
           font-style: normal;
         }
-
         text {
           font-family: 'Barlow', sans-serif;
         }
@@ -823,26 +513,19 @@ function downloadSVG() {
     defs.innerHTML = fontCSS;
     clonedSvg.insertBefore(defs, clonedSvg.firstChild);
 
-    // ✅ STEP 2: Inline styles (your existing function)
     inlineAllStyles(clonedSvg);
 
-    // ✅ STEP 3: Serialize
     const serializer = new XMLSerializer();
     let source = serializer.serializeToString(clonedSvg);
 
-    // Ensure namespace
     if (!source.match(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)) {
-      source = source.replace(
-        /^<svg/,
-        '<svg xmlns="http://www.w3.org/2000/svg"'
-      );
+      source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
     }
 
     source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
 
     const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
 
-    // ✅ STEP 4: Download
     const a = document.createElement("a");
     a.href = url;
     a.download = "chart.svg";
