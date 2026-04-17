@@ -41,10 +41,9 @@ def get_user_access(email):
     # We skip the DB call and return a hardcoded record so the rest of the app
     # (blob fetch, tree build, filter) can still be exercised end-to-end.
     if APP_ENV == "development":
-        return {
-            "project": "project1",
-            "role": "/NHS"
-        }
+        return [
+            {"project": "project1", "role": "/NHS"}
+        ]
 
     conn = get_sql_connection()
     cursor = conn.cursor()
@@ -54,15 +53,12 @@ def get_user_access(email):
         email
     )
 
-    row = cursor.fetchone()
+    rows = cursor.fetchall()
 
-    if not row:
-        return None
+    if not rows:
+        return []
 
-    return {
-        "project": row[0],
-        "role": row[1]
-    }
+    return [{"project": row[0], "role": row[1]} for row in rows]
 
 # -----------------------------------
 # DATASET ACCESS (SQL optional)
@@ -244,16 +240,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if not email:
             return func.HttpResponse("Unauthorized", status_code=401)
 
-        access = get_user_access(email)
+        access_list = get_user_access(email)
 
-        if not access:
+        if not access_list:
             return func.HttpResponse("Forbidden", status_code=403)
+
+        # If the user has multiple projects, the frontend can request a specific
+        # one via ?project=. Default to the first assigned project.
+        requested = req.params.get("project")
+        if requested:
+            access = next((a for a in access_list if a["project"] == requested), None)
+            if not access:
+                return func.HttpResponse("Forbidden", status_code=403)
+        else:
+            access = access_list[0]
 
         project_id = access["project"]
         role = access["role"]
-
-        if not project_id:
-            return func.HttpResponse("Forbidden", status_code=403)
 
         hierarchy_file = f"{project_id}/data.csv"
         mapping_file   = f"{project_id}/qText.csv"
@@ -267,7 +270,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             json.dumps({
                 "tree": filtered_tree,
-                "scores": format_score_mapping(mapping_rows)
+                "scores": format_score_mapping(mapping_rows),
+                "projects": [a["project"] for a in access_list],
+                "currentProject": project_id
             }),
             status_code=200,
             mimetype="application/json"

@@ -174,7 +174,7 @@ function initCardCarousel(container) {
   `;
 } */
 
-async function loadData(container, user) {
+async function loadData(container, user, projectId = null) {
   try {
     if (!user.userDetails) {
       console.warn("No user detected");
@@ -182,12 +182,10 @@ async function loadData(container, user) {
     }
 
     const chartEl = container.querySelector('#chart');
-    //chartEl.innerHTML = `<div class="chart-loading">Loading chart…</div>`;
     console.log("loadData started, chartEl contents:", chartEl.innerHTML);
-    // Force the browser to paint the loading message before continuing
-    //await new Promise(resolve => requestAnimationFrame(resolve));
 
-    const res = await fetch(`/api/me`);
+    const url = projectId ? `/api/me?project=${encodeURIComponent(projectId)}` : `/api/me`;
+    const res = await fetch(url);
     console.log("fetch resolved");
     if (!res.ok) {
       if (res.status === 401) {
@@ -195,20 +193,53 @@ async function loadData(container, user) {
         return;
       }
       if (res.status === 403) {
-        console.warn("User not authorised for dataset");
+        chartEl.innerHTML = `<div class="chart-loading">No dataset assigned to your account. Please contact your administrator.</div>`;
         return;
       }
       throw new Error(`HTTP ${res.status}`);
     }
-    
-    const data = await res.json();
-    console.log("about to draw chart, chartEl contents:", chartEl.innerHTML);
 
+    const data = await res.json();
+
+    if (data.projects && data.projects.length > 1) {
+      renderProjectDropdown(container, data.projects, data.currentProject, (selected) => {
+        loadData(container, user, selected);
+      });
+    }
+
+    console.log("about to draw chart, chartEl contents:", chartEl.innerHTML);
     requestAnimationFrame(() => drawChart(data.tree, data.scores, chartEl));
 
   } catch (err) {
     console.error("loadData error", err);
   }
+}
+
+function renderProjectDropdown(container, projects, currentProject, onChange) {
+  const actions = container.querySelector('.control-actions');
+  if (!actions) return;
+
+  // Update existing dropdown rather than adding a second one
+  let select = container.querySelector('#projectSelector');
+  if (select) {
+    select.value = currentProject;
+    return;
+  }
+
+  select = document.createElement('select');
+  select.id = 'projectSelector';
+  select.className = 'project-selector';
+
+  projects.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p;
+    if (p === currentProject) opt.selected = true;
+    select.appendChild(opt);
+  });
+
+  select.addEventListener('change', () => onChange(select.value));
+  actions.appendChild(select);
 }
 
 function drawChart(data, scores, chartEl) {
