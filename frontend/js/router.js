@@ -30,7 +30,7 @@ async function router() {
 
   const user = await getUser();
 
-  if (!user && path !== "/login") {
+  if ((!user || !user.userDetails) && path !== "/login") {
     window.location.hash = "/login";
     return;
   }
