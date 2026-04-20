@@ -27,7 +27,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=200
         )
 
-    roles = ["authenticated"] if email in ALLOWED_EMAILS else []
+    roles = ["appUser"] if email in ALLOWED_EMAILS else []
 
     return func.HttpResponse(
         json.dumps({"roles": roles}),

@@ -6,7 +6,7 @@
     },
     {
       "route": "/api/*",
-      "allowedRoles": ["authenticated"]
+      "allowedRoles": ["appUser"]
     },
     {
       "route": "/*",

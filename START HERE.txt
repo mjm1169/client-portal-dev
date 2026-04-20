@@ -13,6 +13,7 @@ func start
 Terminal 2 — Frontend (from frontend/):
 npm run dev
 
+git pull --rebase origin main && git push
 
 
 If 401
