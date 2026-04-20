@@ -1,13 +1,27 @@
 {
     "routes": [
-      {
-        "route": "/api/*",
-        "allowedRoles": ["anonymous", "authenticated"]
-      }
-    ],
-    "navigationFallback": {
-      "rewrite": "/index.html"
+    {
+      "route": "/.auth/login/aad",
+      "allowedRoles": ["anonymous"]
     },
+    {
+      "route": "/api/roles",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/*",
+      "allowedRoles": ["authenticated"]
+    }
+  ],
+  "responseOverrides": {
+    "401": {
+      "redirect": "/.auth/login/aad",
+      "statusCode": 302
+    }
+  },
+  "navigationFallback": {
+    "rewrite": "/index.html"
+  },
     "auth": {
       "identityProviders": {
         "azureActiveDirectory": {
