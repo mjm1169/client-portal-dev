@@ -2,6 +2,19 @@ On load
 $env:PATH="C:\Users\Matty.Mason\tools\node-v20.20.0-win-x64;" + $env:PATH
 swa start ./frontend --api-location ./api 
 
+On load with vite
+You need two terminals running:
+
+Terminal 1 — API (from api/):
+
+cd api
+func start
+
+Terminal 2 — Frontend (from frontend/):
+npm run dev
+
+
+
 If 401
 http://localhost:4280/.auth/login/aad
 

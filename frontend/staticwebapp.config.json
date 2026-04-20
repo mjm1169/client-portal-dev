@@ -1,1 +1,24 @@
-{"routes":[{"route":"/api/*","allowedRoles":["anonymous","authenticated"]}],"navigationFallback":{"rewrite":"/index.html"}}
+{
+    "routes": [
+      {
+        "route": "/api/*",
+        "allowedRoles": ["anonymous", "authenticated"]
+      }
+    ],
+    "navigationFallback": {
+      "rewrite": "/index.html"
+    },
+    "auth": {
+      "identityProviders": {
+        "azureActiveDirectory": {
+          "userDetailsClaim": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+          "registration": {
+            "openIdIssuer": "https://login.microsoftonline.com/032e1440-c990-45a2-807e-e98e0b08aeda/v2.0",
+            "clientIdSettingName": "AZURE_CLIENT_ID",
+            "clientSecretSettingName": "AZURE_CLIENT_SECRET_APP_SETTING_NAME"
+          }
+        }
+      },
+      "rolesSource": "/api/roles"
+    }
+  }
