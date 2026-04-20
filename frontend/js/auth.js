@@ -26,5 +26,5 @@ export function login() {
 }
 
 export function logout() {
-  window.location.href = "/.auth/logout";
+  window.location.href = "/.auth/logout?post_logout_redirect_uri=/";
 }
