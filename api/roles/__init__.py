@@ -27,7 +27,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=200
         )
 
-    roles = ["appUser"] if email in ALLOWED_EMAILS else []
+    roles = ["appUser"]  # temporary: always grant to confirm function is being called
 
     return func.HttpResponse(
         json.dumps({"roles": roles}),
