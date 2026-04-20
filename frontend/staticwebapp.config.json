@@ -1,1 +1,1 @@
-{"routes":[{"route":"/api/*","allowedRoles":["anonymous","authenticated"]}],"navigationFallback":{"rewrite":"/index.html"}}
+{"routes":[{"route":"/api/*","allowedRoles":["anonymous","authenticated"]}],"navigationFallback":{"rewrite":"/index.html"},"auth":{"rolesSource":"api/roles","identityProviders":{"azureActiveDirectory":{"registration":{"openIdIssuer":"https://login.microsoftonline.com/0676da8f-706a-4a2f-943c-bc49bcbd640c","clientIdSettingName":"AZURE_CLIENT_ID","clientSecretSettingName":"AZURE_CLIENT_SECRET_APP_SETTING_NAME"}}}}}
