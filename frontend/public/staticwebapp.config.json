@@ -17,7 +17,7 @@
         "azureActiveDirectory": {
           "userDetailsClaim": "preferred_username",
           "registration": {
-            "openIdIssuer": "https://login.microsoftonline.com/032e1440-c990-45a2-807e-e98e0b08aeda/v2.0",
+            "openIdIssuer": "https://login.microsoftonline.com/0676da8f-706a-4a2f-943c-bc49bcbd640c/v2.0",
             "clientIdSettingName": "AZURE_CLIENT_ID",
             "clientSecretSettingName": "AZURE_CLIENT_SECRET_APP_SETTING_NAME"
           }
