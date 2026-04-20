@@ -1,1 +1,20 @@
-{"routes":[{"route":"/api/roles","allowedRoles":["anonymous","authenticated"]},{"route":"/api/*","allowedRoles":["authenticated"]},{"route":"/*","allowedRoles":["anonymous","authenticated"]}],"navigationFallback":{"rewrite":"/index.html"}}
+{
+  "routes": [
+    {
+      "route": "/api/roles",
+      "allowedRoles": ["anonymous", "authenticated"]
+    },
+    {
+      "route": "/api/*",
+      "allowedRoles": ["authenticated"]
+    },
+    {
+      "route": "/*",
+      "allowedRoles": ["anonymous", "authenticated"]
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html"
+  },
+  "rolesSource": "/api/roles"
+}
