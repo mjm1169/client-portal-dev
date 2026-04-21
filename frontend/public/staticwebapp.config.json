@@ -1,22 +1,17 @@
 {
   "routes": [
     {
-      "route": "/api/roles",
-      "allowedRoles": ["anonymous", "authenticated"]
-    },
-    {
       "route": "/api/*",
-      "allowedRoles": ["appUser"]
+      "allowedRoles": ["authenticated"]
     },
     {
       "route": "/*",
-      "allowedRoles": ["anonymous", "authenticated"]
+      "allowedRoles": ["anonymous"]
     }
   ],
   "navigationFallback": {
     "rewrite": "/index.html"
   },
-  "rolesSource": "/api/roles",
   "auth": {
     "identityProviders": {
       "azureActiveDirectory": {
