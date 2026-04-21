@@ -273,9 +273,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.exception("Unhandled exception in /api/me")
 
         body = {"error": "Internal server error"}
-        if APP_ENV == "development":
-            import traceback
-            body["detail"] = traceback.format_exc()
+        import traceback
+        body["detail"] = traceback.format_exc()
 
         return func.HttpResponse(
             json.dumps(body),
