@@ -77,7 +77,7 @@ def log_access(email, project, outcome):
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO AuditLog (email, project, outcome) VALUES (?, ?, ?)",
-            email, project, outcome
+            (email, project, outcome)
         )
         conn.commit()
     except Exception:
