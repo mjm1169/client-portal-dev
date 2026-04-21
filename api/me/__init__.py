@@ -82,7 +82,6 @@ def log_access(email, project, outcome):
         conn.commit()
     except Exception:
         logging.exception("Failed to write audit log")
-    logging.info(pyodbc.drivers())
 
 
 # -----------------------------------
