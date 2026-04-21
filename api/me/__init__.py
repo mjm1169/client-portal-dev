@@ -79,6 +79,9 @@ def log_access(email, project, outcome):
             "INSERT INTO AuditLog (email, project, outcome) VALUES (?, ?, ?)",
             (email, project, outcome)
         )
+        cursor.execute(
+            "DELETE FROM AuditLog WHERE timestamp < DATEADD(day, -90, GETUTCDATE())"
+        )
         conn.commit()
     except Exception:
         logging.exception("Failed to write audit log")
@@ -225,6 +228,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         email = get_user_email(req)
 
         if not email:
+            log_access("unknown", None, "unauthorized")
             return func.HttpResponse("Unauthorized", status_code=401)
 
         access_list = get_user_access(email)
