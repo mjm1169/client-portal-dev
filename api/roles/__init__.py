@@ -9,18 +9,22 @@ ALLOWED_EMAILS = {
 }
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
+    email = ""
     principal_header = req.headers.get("x-ms-client-principal", "")
-    if not principal_header:
-        return func.HttpResponse(
-            json.dumps({"roles": []}),
-            mimetype="application/json",
-            status_code=200
-        )
+    if principal_header:
+        try:
+            principal = json.loads(base64.b64decode(principal_header).decode("utf-8"))
+            email = principal.get("userDetails", "").lower()
+        except Exception:
+            pass
+    else:
+        try:
+            body = req.get_json()
+            email = body.get("userDetails", "").lower()
+        except Exception:
+            pass
 
-    try:
-        principal = json.loads(base64.b64decode(principal_header).decode("utf-8"))
-        email = principal.get("userDetails", "").lower()
-    except Exception:
+    if not email:
         return func.HttpResponse(
             json.dumps({"roles": []}),
             mimetype="application/json",
