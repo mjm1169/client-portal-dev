@@ -1,1 +1,32 @@
-{"routes":[{"route":"/api/roles","allowedRoles":["anonymous","authenticated"]},{"route":"/api/*","allowedRoles":["appUser"]},{"route":"/*","allowedRoles":["anonymous","authenticated"]}],"navigationFallback":{"rewrite":"/index.html"},"rolesSource":"/api/roles","auth":{"rolesSource":"/api/roles","identityProviders":{"azureActiveDirectory":{"registration":{"openIdIssuer":"https://login.microsoftonline.com/0676da8f-706a-4a2f-943c-bc49bcbd640c","clientIdSettingName":"AZURE_CLIENT_ID","clientSecretSettingName":"AZURE_CLIENT_SECRET_APP_SETTING_NAME"}}}}}
+{
+  "routes": [
+    {
+      "route": "/api/roles",
+      "allowedRoles": ["anonymous", "authenticated"]
+    },
+    {
+      "route": "/api/*",
+      "allowedRoles": ["appUser"]
+    },
+    {
+      "route": "/*",
+      "allowedRoles": ["anonymous", "authenticated"]
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html"
+  },
+  "rolesSource": "/api/roles",
+  "auth": {
+    "identityProviders": {
+      "azureActiveDirectory": {
+        "userDetailsClaim": "preferred_username",
+        "registration": {
+          "openIdIssuer": "https://login.microsoftonline.com/0676da8f-706a-4a2f-943c-bc49bcbd640c/v2.0",
+          "clientIdSettingName": "AZURE_CLIENT_ID",
+          "clientSecretSettingName": "AZURE_CLIENT_SECRET_APP_SETTING_NAME"
+        }
+      }
+    }
+  }
+}
