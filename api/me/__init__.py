@@ -68,6 +68,20 @@ def get_sql_connection():
     import pyodbc
     conn_str = os.environ["SQL_CONNECTION_STRING"]
     return pyodbc.connect(conn_str)
+
+def log_access(email, project, outcome):
+    if APP_ENV == "development":
+        return
+    try:
+        conn = get_sql_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO AuditLog (email, project, outcome) VALUES (?, ?, ?)",
+            email, project, outcome
+        )
+        conn.commit()
+    except Exception:
+        logging.exception("Failed to write audit log")
     logging.info(pyodbc.drivers())
 
 
@@ -217,6 +231,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         access_list = get_user_access(email)
 
         if not access_list:
+            log_access(email, None, "forbidden_no_access")
             return func.HttpResponse("Forbidden", status_code=403)
 
         # If the user has multiple projects, the frontend can request a specific
@@ -225,6 +240,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if requested:
             access = next((a for a in access_list if a["project"] == requested), None)
             if not access:
+                log_access(email, requested, "forbidden_wrong_project")
                 return func.HttpResponse("Forbidden", status_code=403)
         else:
             access = access_list[0]
@@ -240,6 +256,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         tree = build_tree(rows)
         filtered_tree = filter_tree(tree, role)
+
+        log_access(email, project_id, "success")
 
         return func.HttpResponse(
             json.dumps({
