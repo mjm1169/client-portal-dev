@@ -79,10 +79,14 @@ def log_access(email, project, outcome):
             "INSERT INTO AuditLog (email, project, outcome) VALUES (?, ?, ?)",
             (email, project, outcome)
         )
-        cursor.execute(
-            "DELETE FROM AuditLog WHERE timestamp < DATEADD(day, -90, GETUTCDATE())"
-        )
         conn.commit()
+        try:
+            cursor.execute(
+                "DELETE FROM AuditLog WHERE timestamp < DATEADD(day, -90, GETUTCDATE())"
+            )
+            conn.commit()
+        except Exception:
+            logging.exception("Failed to purge old audit logs")
     except Exception:
         logging.exception("Failed to write audit log")
 
