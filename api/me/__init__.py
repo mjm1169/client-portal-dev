@@ -68,18 +68,21 @@ def get_user_access(email):
 def get_sql_connection():
     import pyodbc
     conn_str = os.environ["SQL_CONNECTION_STRING"]
-    return pyodbc.connect(conn_str, timeout=10)
+    conn = pyodbc.connect(conn_str, timeout=10)
+    conn.timeout = 30  # statement (query execution) timeout in seconds
+    return conn
 
-def log_access(email, project, outcome):
+def log_access(email, project, outcome, detail=None):
     if APP_ENV == "development":
         return
+    outcome_value = f"{outcome}: {detail[:200]}" if detail else outcome
     try:
         conn = get_sql_connection()
         try:
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT INTO AuditLog (email, project, outcome) VALUES (?, ?, ?)",
-                (email, project, outcome)
+                (email, project, outcome_value)
             )
             conn.commit()
         finally:
@@ -274,8 +277,16 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             mimetype="application/json"
         )
 
-    except Exception:
+    except Exception as exc:
         logging.exception("Unhandled exception in /api/me")
+
+        detail = f"{type(exc).__name__}: {exc}"
+        log_access(
+            locals().get("email") or "unknown",
+            locals().get("project_id"),
+            "error",
+            detail
+        )
 
         body = {"error": "Internal server error"}
         if APP_ENV == "development":
