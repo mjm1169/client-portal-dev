@@ -127,7 +127,7 @@ function initCardCarousel(container) {
 // ---------------------------------------------------------------------------
 // Data loading
 // ---------------------------------------------------------------------------
-async function loadData(container, user, projectId = null) {
+async function loadData(container, user, projectId = null, isRetry = false) {
   try {
     if (!user.userDetails) {
       console.warn("No user detected");
@@ -147,6 +147,11 @@ async function loadData(container, user, projectId = null) {
         chartEl.innerHTML = `<div class="chart-loading">No dataset assigned to your account. Please contact your administrator.</div>`;
         return;
       }
+      if (res.status === 500 && !isRetry) {
+        chartEl.innerHTML = `<div class="chart-loading">Starting up, trying again in a moment…</div>`;
+        setTimeout(() => loadData(container, user, projectId, true), 5000);
+        return;
+      }
       throw new Error(`HTTP ${res.status}`);
     }
 
@@ -162,6 +167,10 @@ async function loadData(container, user, projectId = null) {
 
   } catch (err) {
     console.error("loadData error", err);
+    const chartEl = container.querySelector('#chart');
+    if (chartEl) {
+      chartEl.innerHTML = `<div class="chart-loading">Something went wrong. Please refresh the page.</div>`;
+    }
   }
 }
 
