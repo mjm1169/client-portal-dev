@@ -21,6 +21,7 @@ export function mountHome(container, user) {
 
       </div>
 
+      ${/*
       <div class="feature-card" id="goUserRadial">
 
         <div class="feature-card__image">
@@ -36,6 +37,24 @@ export function mountHome(container, user) {
         </div>
 
       </div>
+      */ ''}
+
+      <div class="feature-card" id="goScrollytelling">
+
+        <div class="feature-card__image">
+          <img src="assets/scrolly_icon.png" alt="Scrollytelling report preview">
+        </div>
+
+        <div class="feature-card__content">
+          <h2>Scrollytelling Report</h2>
+          <p>
+            Scroll through a narrative report with animated charts
+            highlighting the key findings.
+          </p>
+
+        </div>
+
+      </div>
 
     </div>
   `;
@@ -44,7 +63,10 @@ export function mountHome(container, user) {
   container.querySelector('#goRadial').addEventListener('click', () => {
     window.location.hash = "/radial";
   });
-  container.querySelector('#goUserRadial').addEventListener('click', () => {
-    window.location.hash = "/userradial";
+  // container.querySelector('#goUserRadial').addEventListener('click', () => {
+  //   window.location.hash = "/userradial";
+  // });
+  container.querySelector('#goScrollytelling').addEventListener('click', () => {
+    window.location.hash = "/scrollytelling";
   });
 }

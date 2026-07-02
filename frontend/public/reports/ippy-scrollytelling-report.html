@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ippy · People Report 2026 · Prepared by Ipsos</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Neue Machina';src:url('/fonts/NeueMachina-Regular.woff2') format('woff2');font-weight:400;font-display:swap;}
+@font-face{font-family:'Neue Machina';src:url('/fonts/NeueMachina-Medium.woff2') format('woff2');font-weight:500;font-display:swap;}
+@font-face{font-family:'Neue Machina';src:url('/fonts/NeueMachina-Ultrabold.woff2') format('woff2');font-weight:800;font-display:swap;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#152022;--lime:#c6e88c;--mint:#00ca87;--white:#fff;
+  --lime-a:#eef7da;--mint-a:#e7faf2;--ink-a:rgba(21,32,34,0.05);
+  --off:#F6F7F1;
+  --tx:#152022;--txm:rgba(21,32,34,0.64);--txl:rgba(21,32,34,0.42);
+  --bd:rgba(21,32,34,0.12);
+  --f:'Neue Machina','Space Grotesk',sans-serif;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--f);background:var(--off);color:var(--tx);font-size:16px;}
+
+.nav{background:var(--ink);height:54px;display:flex;align-items:center;padding:0 36px;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.nav-logo{font-weight:800;font-size:16px;color:#fff;letter-spacing:0.5px;display:flex;align-items:center;gap:10px;}
+.nav-pip{width:28px;height:28px;background:var(--lime);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--ink);}
+.nav-right{font-size:13px;color:rgba(255,255,255,0.5);font-weight:400;}
+
+.hero{background:var(--ink);padding:80px 40px 110px;position:relative;overflow:hidden;display:flex;justify-content:center;}
+.hero::after{content:'';position:absolute;right:-100px;top:-100px;width:500px;height:500px;border-radius:50%;background:rgba(140,232,198,0.10);pointer-events:none;}
+.hero-label{font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:var(--lime);margin-bottom:14px;}
+.hero-title{font-size:48px;font-weight:800;color:#fff;line-height:1.05;margin-bottom:10px;position:relative;z-index:1;letter-spacing:-1px;}
+.hero-sub{font-size:15px;color:rgba(255,255,255,0.5);font-weight:400;margin-bottom:52px;z-index:1;position:relative;}
+.hero-kpis{display:flex;gap:1px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;max-width:520px;position:relative;z-index:1;}
+.kpi{background:rgba(255,255,255,0.03);padding:18px 24px;flex:1;}
+.kpi-val{font-size:38px;font-weight:800;color:#fff;line-height:1;letter-spacing:-0.5px;}
+.kpi-val sup{font-size:18px;color:var(--lime);font-weight:500;}
+.kpi-val .up{font-size:13px;color:var(--lime);margin-left:4px;font-weight:500;}
+.kpi-lbl{font-size:11px;color:rgba(255,255,255,0.45);margin-top:6px;font-weight:400;}
+.hero-content{max-width:720px;width:100%;}
+.scroll-hint{position:absolute;bottom:54px;left:80px;font-size:12px;color:rgba(255,255,255,0.5);display:flex;align-items:center;gap:8px;z-index:1;animation:bob 2s ease-in-out infinite;font-weight:400;}
+@keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(5px);}}
+
+.scene{position:relative;}
+.scene-sticky{position:sticky;top:54px;height:calc(100vh - 54px);display:flex;align-items:center;justify-content:center;}
+.line-scene{height:240vh;}
+.line-card{background:var(--white);border:1px solid var(--bd);border-radius:12px;width:90%;max-width:720px;padding:34px 38px 30px;}
+.line-eyebrow{font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:6px;}
+.line-title{font-size:24px;font-weight:800;color:var(--ink);margin-bottom:4px;letter-spacing:-0.5px;}
+.line-cap{font-size:14px;color:var(--txm);font-weight:400;min-height:22px;transition:opacity 0.3s;margin-bottom:18px;}
+.line-svg{width:100%;height:auto;display:block;}
+.prog-rail{height:3px;background:var(--ink-a);border-radius:2px;margin-top:18px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--lime);width:0%;border-radius:2px;}
+
+.bar-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+.bar-sticky{position:sticky;top:54px;height:calc(100vh - 54px);display:flex;align-items:center;justify-content:center;padding:40px 40px 40px 80px;}
+.bar-card{background:var(--white);border:1px solid var(--bd);border-radius:12px;width:100%;max-width:400px;padding:30px 30px 24px;}
+.bar-card-eyebrow{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--txl);margin-bottom:4px;}
+.bar-card-title{font-size:17px;font-weight:800;color:var(--ink);margin-bottom:22px;letter-spacing:-0.3px;}
+.bar-row{margin-bottom:15px;transition:opacity 0.35s;}
+.bar-head{display:flex;justify-content:space-between;margin-bottom:5px;}
+.bar-label{font-size:13px;font-weight:500;color:var(--tx);transition:color 0.35s;}
+.bar-score{font-size:16px;font-weight:800;color:var(--ink);transition:opacity 0.35s;}
+.bar-track{height:9px;background:var(--ink-a);border-radius:5px;position:relative;overflow:hidden;}
+.bar-fill{height:100%;border-radius:5px;width:0;transition:width 0.7s cubic-bezier(0.16,1,0.3,1),background 0.4s;}
+.bar-bench{position:absolute;top:-3px;width:2px;height:15px;background:var(--txl);border-radius:1px;}
+.bar-row.dim{opacity:0.28;}
+.bar-row.dim .bar-label{color:var(--txl);}
+.bar-legend{display:flex;gap:18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--bd);}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txl);font-weight:400;}
+.leg-swatch{width:18px;height:6px;border-radius:3px;}
+.leg-dash{width:12px;height:2px;background:var(--txl);border-radius:1px;}
+.bar-steps{padding:0 80px 0 40px;}
+.bstep{min-height:90vh;display:flex;flex-direction:column;justify-content:center;opacity:0.25;transition:opacity 0.4s;}
+.bstep.on{opacity:1;}
+.bstep-num{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:10px;}
+.bstep-head{font-size:26px;font-weight:800;color:var(--ink);line-height:1.15;margin-bottom:14px;letter-spacing:-0.5px;}
+.bstep-body{font-size:15px;color:var(--txm);font-weight:400;line-height:1.7;}
+.bstep-body strong{color:var(--ink);font-weight:500;}
+
+.chapter{padding:56px 40px;border-top:1px solid var(--bd);background:var(--white);display:flex;flex-direction:column;align-items:center;}
+.ch-eyebrow{font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:12px;text-align:center;}
+.ch-title{font-size:30px;font-weight:800;color:var(--ink);margin-bottom:10px;letter-spacing:-0.5px;text-align:center;}
+.ch-intro{font-size:15px;color:var(--txm);font-weight:400;line-height:1.65;max-width:620px;margin:0 auto 28px;text-align:center;}
+
+.end{background:var(--ink);min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 40px;position:relative;overflow:hidden;}
+.end::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--lime),transparent);}
+.end-check{width:56px;height:56px;border-radius:50%;background:rgba(135,202,0,0.16);border:1.5px solid var(--lime);display:flex;align-items:center;justify-content:center;margin-bottom:24px;color:var(--lime);font-size:26px;}
+.end-eyebrow{font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:12px;}
+.end-title{font-size:34px;font-weight:800;color:#fff;margin-bottom:14px;max-width:560px;line-height:1.12;letter-spacing:-0.5px;}
+.end-body{font-size:15px;color:rgba(255,255,255,0.6);font-weight:400;max-width:520px;line-height:1.65;margin-bottom:32px;}
+.end-btn{background:var(--lime);border:none;border-radius:8px;color:var(--ink);font-family:var(--f);font-size:14px;font-weight:500;padding:13px 28px;cursor:pointer;transition:filter 0.2s;}
+.end-btn:hover{filter:brightness(1.08);}
+.foot{background:var(--ink);border-top:1px solid rgba(255,255,255,0.08);padding:22px 80px;display:flex;justify-content:space-between;align-items:center;}
+.foot-meta{font-size:12px;color:rgba(255,255,255,0.35);font-weight:400;}
+.foot-logo{font-size:13px;font-weight:800;color:#fff;letter-spacing:0.5px;}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo"><div class="nav-pip">ip</div>ippy</div>
+  <div class="nav-right">Ippy · June 2026 · Confidential</div>
+</nav>
+
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-label">Employee Engagement Survey · 2026</div>
+    <div class="hero-title">Ippy<br>People Report</div>
+    <div class="hero-sub">3,847 respondents · 14 countries · 89% response rate · Prepared by Ipsos</div>
+    <div class="hero-kpis">
+      <div class="kpi"><div class="kpi-val" id="kv1">—</div><div class="kpi-lbl">Engagement index</div></div>
+      <div class="kpi"><div class="kpi-val" id="kv2">—<sup>FS</sup></div><div class="kpi-lbl">Financial services norm</div></div>
+      <div class="kpi"><div class="kpi-val" id="kv3">—</div><div class="kpi-lbl">Change vs. 2025</div></div>
+    </div>
+    <div class="scroll-hint">Scroll to begin <span style="font-size:15px;">↓</span></div>
+  </div>
+  <div class="hero-wave"></div>
+</section>
+
+<section class="scene line-scene" id="lineScene">
+  <div class="scene-sticky">
+    <div class="line-card">
+      <div class="line-eyebrow">Engagement over time</div>
+      <div class="line-title">Two and a half years of steady climb</div>
+      <div class="line-cap" id="lineCap">Keep scrolling to trace the journey…</div>
+      <svg class="line-svg" id="lineSvg" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Engagement index by quarter rising from 61 to 73 against a flat benchmark of 65"></svg>
+      <div class="prog-rail"><div class="prog-fill" id="lineProg"></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="scene bar-scene" id="barScene">
+  <div class="bar-grid">
+    <div class="bar-sticky">
+      <div class="bar-card">
+        <div class="bar-card-eyebrow">Engagement themes</div>
+        <div class="bar-card-title" id="barTitle">Your seven themes</div>
+        <div id="barChart"></div>
+        <div class="bar-legend">
+          <div class="leg-item"><div class="leg-swatch" style="background:var(--lime);"></div>At or above norm</div>
+          <div class="leg-item"><div class="leg-swatch" style="background:var(--mint);"></div>Below norm</div>
+          <div class="leg-item"><div class="leg-dash"></div>FS benchmark</div>
+        </div>
+      </div>
+    </div>
+    <div class="bar-steps">
+      <div class="bstep" data-step="0">
+        <div class="bstep-num">Your strength</div>
+        <div class="bstep-head">Wellbeing is your standout result</div>
+        <div class="bstep-body">At <strong>78</strong>, Wellbeing sits 13 points above the sector norm. "Flexible working" is the single most cited positive in open comments — this is a genuine, lived strength, not just a number.</div>
+      </div>
+      <div class="bstep" data-step="1">
+        <div class="bstep-num">Watch closely</div>
+        <div class="bstep-head">Leadership looks fine — until you split it</div>
+        <div class="bstep-body">Leadership scores <strong>69</strong>, exactly at benchmark. But that average hides an <strong>18-point gap</strong> between your strongest and weakest divisions. The answer to fixing it already exists inside the business.</div>
+      </div>
+      <div class="bstep" data-step="2">
+        <div class="bstep-num">The priority</div>
+        <div class="bstep-head">Growth & Development is the gap to close</div>
+        <div class="bstep-body">At <strong>58</strong> — seven points below benchmark and falling — this is your clearest priority. It's also the theme most tied to people leaving: low scorers are <strong>2.4× more likely</strong> to be considering an exit.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="chapter" id="ch-culture" style="background:#fff;">
+  <div style="max-width:900px;width:100%;">
+    <div class="ch-eyebrow">Chapter four</div>
+    <div class="ch-title">Culture now vs. culture desired</div>
+    <div class="ch-intro">Each word is rated by how strongly employees associate it with Ippy today (horizontal) against how much they want it to define culture in the future (vertical). Hover any word for its scores.</div>
+
+    <div style="display:flex;gap:22px;margin-bottom:18px;flex-wrap:wrap;justify-content:center;">
+      <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--txm);"><div style="width:11px;height:11px;border-radius:50%;background:#c6e88c;flex-shrink:0;"></div>Strengths to build on</div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--txm);"><div style="width:11px;height:11px;border-radius:50%;background:#152022;flex-shrink:0;"></div>Aspirations to cultivate</div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--txm);"><div style="width:11px;height:11px;border-radius:50%;background:#a8a594;flex-shrink:0;"></div>Present but unwanted</div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--txm);"><div style="width:11px;height:11px;border-radius:50%;background:#00ca87;flex-shrink:0;"></div>Low priority</div>
+    </div>
+
+    <div style="position:relative;background:#fff;border:1px solid var(--bd);border-radius:12px;padding:14px;max-width:860px;margin:0 auto;" id="cultureWrap">
+      <svg id="cultureSvg" viewBox="0 0 760 430" style="display:block;width:100%;height:auto;overflow:visible;" role="img" aria-label="Scatter plot of 30 culture words by current association and future desire score"></svg>
+      <div id="cultureTip" style="position:absolute;background:#152022;color:#fff;border-radius:6px;padding:10px 14px;font-size:13px;font-family:var(--f);pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:10;min-width:170px;max-width:210px;"></div>
+    </div>
+  </div>
+</section>
+
+<section class="end">
+  <div class="end-check">✓</div>
+  <div class="end-eyebrow">End of report</div>
+  <div class="end-title">That's your 2026 story, in one scroll</div>
+  <div class="end-body">A sector-leading engagement index, exceptional wellbeing, and one clear priority: closing the growth and development gap before it costs you your most ambitious people.</div>
+  <button class="end-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">Back to the top ↑</button>
+</section>
+
+<div class="foot">
+  <div class="foot-meta">Confidential · Prepared by Ipsos for Ippy · June 2026 · Not for redistribution</div>
+  <div class="foot-logo">ipsos</div>
+</div>
+
+<script>
+[{el:'kv1',val:73,suf:'%',extra:'<span class="up">▲3</span>'},
+ {el:'kv2',val:65,suf:'<sup>FS</sup>'},
+ {el:'kv3',val:3,pre:'▲ +',suf:' pts',col:'#c6e88c'}
+].forEach(({el,val,suf='',pre='',extra='',col})=>{
+  const node=document.getElementById(el),dur=1100,start=performance.now();
+  (function tick(now){const t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),v=Math.round(e*val);
+    node.innerHTML=`${pre?`<span style="color:${col}">${pre}</span>`:''}${v}${suf}${t>=1?extra:''}`;
+    if(t<1)requestAnimationFrame(tick);})(start);
+});
+
+const LBL=['Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25','Q1 26','Q2 26'];
+const VAL=[61,63,62,65,66,65,68,70,71,73];
+const YMIN=58,YMAX=78,PX0=46,PX1=614,PY0=24,PY1=250;
+const xAt=i=>PX0+(i/(VAL.length-1))*(PX1-PX0);
+const yAt=v=>PY1-((v-YMIN)/(YMAX-YMIN))*(PY1-PY0);
+let lpath,llen,lpts,llbls;
+(function buildLine(){
+  const svg=document.getElementById('lineSvg');let h='';
+  [58,63,68,73,78].forEach(v=>{const y=yAt(v);
+    h+=`<line x1="${PX0}" y1="${y.toFixed(1)}" x2="${PX1}" y2="${y.toFixed(1)}" stroke="rgba(21,32,34,0.06)" stroke-width="1"/>`;
+    h+=`<text x="${PX0-10}" y="${(y+4).toFixed(1)}" text-anchor="end" font-family="Space Grotesk" font-size="12" fill="rgba(21,32,34,0.42)">${v}</text>`;});
+  LBL.forEach((lb,i)=>{h+=`<text x="${xAt(i).toFixed(1)}" y="${PY1+22}" text-anchor="middle" font-family="Space Grotesk" font-size="11" fill="rgba(21,32,34,0.42)">${lb}</text>`;});
+  const by=yAt(65);
+  h+=`<line x1="${PX0}" y1="${by.toFixed(1)}" x2="${PX1}" y2="${by.toFixed(1)}" stroke="rgba(21,32,34,0.4)" stroke-width="2" stroke-dasharray="6 4"/>`;
+  h+=`<text x="${PX1}" y="${(by-8).toFixed(1)}" text-anchor="end" font-family="Space Grotesk" font-size="11" font-weight="500" fill="rgba(21,32,34,0.55)">FS benchmark · 65</text>`;
+  let d=`M ${xAt(0).toFixed(1)} ${yAt(VAL[0]).toFixed(1)}`;
+  for(let i=1;i<VAL.length;i++)d+=` L ${xAt(i).toFixed(1)} ${yAt(VAL[i]).toFixed(1)}`;
+  h+=`<path id="lpath" d="${d}" fill="none" stroke="#c6e88c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  VAL.forEach((v,i)=>{const x=xAt(i).toFixed(1),y=yAt(v).toFixed(1);
+    h+=`<circle class="lp-pt" data-i="${i}" cx="${x}" cy="${y}" r="4.5" fill="#fff" stroke="#c6e88c" stroke-width="2.5" opacity="0"/>`;
+    h+=`<text class="lp-lbl" data-i="${i}" x="${x}" y="${(parseFloat(y)-12).toFixed(1)}" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="14" fill="#152022" opacity="0">${v}</text>`;});
+  svg.innerHTML=h;
+  lpath=document.getElementById('lpath');llen=lpath.getTotalLength();lpath.style.strokeDasharray=llen;lpath.style.strokeDashoffset=llen;
+  lpts=[...svg.querySelectorAll('.lp-pt')];llbls=[...svg.querySelectorAll('.lp-lbl')];
+})();
+const CAPS=[[0,'Early 2024 — engagement near the sector norm.'],[0.3,'Through 2024, the first initiatives start to land.'],[0.62,'2025 — the line pulls clear and holds above benchmark.'],[0.9,'Q2 2026 — a sector-leading 73, eight points clear.']];
+function updateLine(p){
+  lpath.style.strokeDashoffset=llen*(1-p);
+  const n=VAL.length-1;
+  lpts.forEach(el=>el.style.opacity=p>=(+el.dataset.i/n)-0.01?1:0);
+  llbls.forEach(el=>el.style.opacity=p>=(+el.dataset.i/n)-0.01?1:0);
+  document.getElementById('lineProg').style.width=(p*100).toFixed(0)+'%';
+  let cap=CAPS[0][1];for(const[t,txt]of CAPS)if(p>=t)cap=txt;
+  if(document.getElementById('lineCap').textContent!==cap)document.getElementById('lineCap').textContent=cap;
+}
+
+const TH=[{l:'Wellbeing',s:78,b:65},{l:'Belonging',s:76,b:67},{l:'Job satisfaction',s:74,b:68},{l:'Manager quality',s:72,b:70},{l:'Leadership',s:69,b:69},{l:'Communication',s:67,b:64},{l:'Growth & Dev.',s:58,b:65}];
+const FOCUS=[['Wellbeing'],['Leadership'],['Growth & Dev.']];
+const TITLE=['Wellbeing leads','Leadership: mind the spread','Growth & Development lags'];
+const k=l=>l.replace(/[^a-z]/gi,'_');
+(function buildBars(){
+  document.getElementById('barChart').innerHTML=TH.map(t=>{const col=t.s>=t.b?'#c6e88c':'#00ca87';
+    return `<div class="bar-row" id="br-${k(t.l)}"><div class="bar-head"><span class="bar-label">${t.l}</span><span class="bar-score">${t.s}</span></div><div class="bar-track"><div class="bar-fill" style="width:0%;background:${col}" data-w="${t.s}"></div><div class="bar-bench" style="left:${t.b}%"></div></div></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('.bar-fill').forEach(el=>el.style.width=el.dataset.w+'%'),250);
+})();
+let lastStep=-99;
+function updateBars(step){
+  if(step===lastStep)return;lastStep=step;
+  const focus=step<0?null:FOCUS[step];
+  document.getElementById('barTitle').textContent=step<0?'Your seven themes':TITLE[step];
+  TH.forEach(t=>document.getElementById('br-'+k(t.l)).classList.toggle('dim',!!(focus&&!focus.includes(t.l))));
+  document.querySelectorAll('.bstep').forEach(s=>s.classList.toggle('on',+s.dataset.step===step));
+}
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lineScene=document.getElementById('lineScene'),barScene=document.getElementById('barScene');
+function progressOf(scene){const r=scene.getBoundingClientRect(),vh=window.innerHeight,dist=scene.offsetHeight-vh;if(dist<=0)return clamp(-r.top/Math.max(1,scene.offsetHeight),0,1);return clamp(-r.top/dist,0,1);}
+function tick(){
+  updateLine(progressOf(lineScene));
+  const r=barScene.getBoundingClientRect(),vh=window.innerHeight;
+  if(r.top<vh*0.6&&r.bottom>vh*0.4)updateBars(clamp(Math.floor(progressOf(barScene)*3),0,2));
+  else if(r.top>=vh*0.6)updateBars(-1);
+  requestAnimationFrame(tick);
+}
+
+(function culture(){
+  const WORDS=[
+    {w:'Collaborative',now:79,future:64},{w:'Inclusive',now:89,future:73},
+    {w:'High-performing',now:81,future:84},{w:'Client-focused',now:65,future:98},
+    {w:'Accountable',now:64,future:85},{w:'Respectful',now:64,future:64},
+    {w:'Ambitious',now:78,future:96},{w:'Meritocratic',now:72,future:75},
+    {w:'Fast-paced',now:91,future:98},{w:'Resilient',now:96,future:84},
+    {w:'Decisive',now:98,future:64},{w:'Innovative',now:53,future:73},
+    {w:'Agile',now:13,future:65},{w:'Transparent',now:18,future:98},
+    {w:'Empowering',now:2,future:88},{w:'Psych. safe',now:40,future:73},
+    {w:'Diverse',now:31,future:64},{w:'Purpose-driven',now:2,future:72},
+    {w:'Curious',now:39,future:86},{w:'Caring',now:27,future:88},
+    {w:'Entrepreneurial',now:24,future:75},{w:'Data-driven',now:50,future:94},
+    {w:'Sustainable',now:14,future:84},{w:'Hierarchical',now:84,future:51},
+    {w:'Risk-averse',now:89,future:18},{w:'Bureaucratic',now:97,future:8},
+    {w:'Competitive',now:77,future:40},{w:'Process-heavy',now:69,future:28},
+    {w:'Siloed',now:4,future:38},{w:'Presenteeist',now:43,future:33},
+  ];
+  const MID=60,PAD={l:48,r:24,t:30,b:42},W=760,H=430;
+  const PW=W-PAD.l-PAD.r,PH=H-PAD.t-PAD.b;
+  const toX=v=>PAD.l+(v/100)*PW,toY=v=>PAD.t+((100-v)/100)*PH;
+  const midX=toX(MID),midY=toY(MID),xR=PAD.l+PW,yB=PAD.t+PH;
+  function qCol(d){const hn=d.now>=MID,hf=d.future>=MID;if(hn&&hf)return '#c6e88c';if(!hn&&hf)return '#152022';if(hn&&!hf)return '#a8a594';return '#00ca87';}
+  const svg=document.getElementById('cultureSvg');if(!svg)return;
+  const maxNow=Math.max(...WORDS.map(d=>d.now)),maxFut=Math.max(...WORDS.map(d=>d.future));
+  let h='';
+  h+=`<rect x="${PAD.l}" y="${PAD.t}" width="${midX-PAD.l}" height="${midY-PAD.t}" fill="rgba(21,32,34,0.04)"/>`;
+  h+=`<rect x="${midX}" y="${PAD.t}" width="${xR-midX}" height="${midY-PAD.t}" fill="rgba(135,202,0,0.07)"/>`;
+  h+=`<rect x="${PAD.l}" y="${midY}" width="${midX-PAD.l}" height="${yB-midY}" fill="rgba(140,232,198,0.10)"/>`;
+  h+=`<rect x="${midX}" y="${midY}" width="${xR-midX}" height="${yB-midY}" fill="rgba(168,165,148,0.10)"/>`;
+  for(let v=20;v<=80;v+=20){h+=`<line x1="${toX(v)}" y1="${PAD.t}" x2="${toX(v)}" y2="${yB}" stroke="rgba(21,32,34,0.05)" stroke-width="1"/>`;h+=`<line x1="${PAD.l}" y1="${toY(v)}" x2="${xR}" y2="${toY(v)}" stroke="rgba(21,32,34,0.05)" stroke-width="1"/>`;}
+  h+=`<line x1="${midX}" y1="${PAD.t}" x2="${midX}" y2="${yB}" stroke="rgba(21,32,34,0.22)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  h+=`<line x1="${PAD.l}" y1="${midY}" x2="${xR}" y2="${midY}" stroke="rgba(21,32,34,0.22)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  const lx=(midX+xR)/2,rx=(PAD.l+midX)/2;
+  [{x:lx,y:PAD.t+14,t:'STRENGTHS TO BUILD ON'},{x:rx,y:PAD.t+14,t:'ASPIRATIONS TO CULTIVATE'},{x:lx,y:yB-8,t:'PRESENT BUT UNWANTED'},{x:rx,y:yB-8,t:'LOW PRIORITY'}].forEach(q=>h+=`<text x="${q.x}" y="${q.y}" text-anchor="middle" font-family="Space Grotesk" font-size="10" font-weight="500" letter-spacing="0.6" fill="rgba(21,32,34,0.28)">${q.t}</text>`);
+  h+=`<text x="${PAD.l+PW/2}" y="${H-6}" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="500" fill="rgba(21,32,34,0.5)">Current association score &#x2192;</text>`;
+  h+=`<text x="13" y="${PAD.t+PH/2}" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="500" fill="rgba(21,32,34,0.5)" transform="rotate(-90,13,${PAD.t+PH/2})">Future desire score &#x2192;</text>`;
+  [20,40,60,80,100].forEach(v=>{h+=`<text x="${toX(v)}" y="${yB+15}" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="rgba(21,32,34,0.4)">${v}</text>`;h+=`<text x="${PAD.l-6}" y="${toY(v)+4}" text-anchor="end" font-family="Space Grotesk" font-size="10" fill="rgba(21,32,34,0.4)">${v}</text>`;});
+  const labelData=WORDS.map((d,i)=>{
+    const px=toX(d.now),py=toY(d.future);
+    const w=d.w.length*5.6+4;
+    const flip=(px+9+w)>(xR-4);
+    const lx=flip?(px-9-w):(px+9);
+    return {i,d,px,py,x:lx,y:py+3.5,w,hh:9.5,flip};
+  });
+  for(let iter=0;iter<300;iter++){
+    let moved=false;
+    for(let a=0;a<labelData.length;a++){
+      for(let b=a+1;b<labelData.length;b++){
+        const A=labelData[a],B=labelData[b];
+        const ax0=A.x,ax1=A.x+A.w,ay0=A.y-A.hh,ay1=A.y+3;
+        const bx0=B.x,bx1=B.x+B.w,by0=B.y-B.hh,by1=B.y+3;
+        const ox=Math.min(ax1,bx1)-Math.max(ax0,bx0);
+        const oy=Math.min(ay1,by1)-Math.max(ay0,by0);
+        if(ox>0&&oy>0){
+          const push=oy/2+0.7;
+          if(A.y<=B.y){A.y-=push;B.y+=push;}else{A.y+=push;B.y-=push;}
+          moved=true;
+        }
+      }
+    }
+    labelData.forEach(L=>{ L.y=Math.max(PAD.t+9,Math.min(yB-2,L.y)); });
+    if(!moved)break;
+  }
+  labelData.forEach(L=>{
+    const d=L.d,i=L.i,col=qCol(d);
+    h+=`<circle class="cdp" data-i="${i}" cx="${L.px.toFixed(1)}" cy="${L.py.toFixed(1)}" r="6" fill="${col}" stroke="#fff" stroke-width="1.5" style="cursor:pointer;"/>`;
+    if(Math.abs(L.y-(L.py+3.5))>3){
+      const lx0=L.flip?(L.px-9):(L.px+9);
+      const lx1=L.flip?(L.x+L.w+1):(L.x-1);
+      h+=`<line x1="${lx0.toFixed(1)}" y1="${L.py.toFixed(1)}" x2="${lx1.toFixed(1)}" y2="${(L.y-3).toFixed(1)}" stroke="rgba(21,32,34,0.22)" stroke-width="1"/>`;
+    }
+    h+=`<text class="cdp-lbl" data-i="${i}" x="${L.x.toFixed(1)}" y="${L.y.toFixed(1)}" text-anchor="${L.flip?'end':'start'}" font-family="Space Grotesk" font-size="9.5" font-weight="500" fill="#152022" style="pointer-events:none;user-select:none;">${d.w}</text>`;
+  });
+  svg.innerHTML=h;
+  const wrap=document.getElementById('cultureWrap'),tip=document.getElementById('cultureTip');
+  function showTip(d,el){
+    const sr=svg.getBoundingClientRect(),wr=wrap.getBoundingClientRect();
+    const cx=parseFloat(el.getAttribute('cx')),cy=parseFloat(el.getAttribute('cy'));
+    const px=(cx/W)*sr.width+(sr.left-wr.left),py=(cy/H)*sr.height+(sr.top-wr.top);
+    const pn=d.now===maxNow?'<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.15);font-size:11px;color:#c6e88c;font-weight:500;">&#9733; Highest current score</div>':'';
+    const pf=d.future===maxFut?'<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.15);font-size:11px;color:#c6e88c;font-weight:500;">&#9733; Highest future desire</div>':'';
+    const gap=d.future-d.now;
+    tip.innerHTML=`<div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:5px;">${d.w}</div><div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;margin-bottom:2px;"><span style="color:rgba(255,255,255,0.6);">Current</span><span style="color:#fff;font-weight:500;">${d.now}</span></div><div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;margin-bottom:2px;"><span style="color:rgba(255,255,255,0.6);">Future desire</span><span style="color:#fff;font-weight:500;">${d.future}</span></div><div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;"><span style="color:rgba(255,255,255,0.6);">Gap</span><span style="color:${gap>0?'#c6e88c':'#cfcabc'};font-weight:500;">${gap>0?'+':''}${gap}</span></div>${pn}${pf}`;
+    tip.style.opacity='1';
+    let left=px+12,top=py-14;
+    if(left+210>wr.width-8)left=px-222;
+    if(top+130>wr.height-8)top=py-130;
+    if(top<8)top=8;
+    tip.style.left=left+'px';tip.style.top=top+'px';
+  }
+  function hideTip(){tip.style.opacity='0';}
+  svg.querySelectorAll('.cdp').forEach(el=>{
+    const d=WORDS[+el.dataset.i],lbl=svg.querySelector(`.cdp-lbl[data-i="${el.dataset.i}"]`);
+    el.addEventListener('mouseenter',()=>{el.setAttribute('r','8');if(lbl)lbl.setAttribute('font-weight','800');showTip(d,el);});
+    el.addEventListener('mouseleave',()=>{el.setAttribute('r','6');if(lbl)lbl.setAttribute('font-weight','500');hideTip();});
+    el.addEventListener('mousemove',()=>showTip(d,el));
+  });
+})();
+
+requestAnimationFrame(tick);
+window.addEventListener('resize',()=>{if(lpath){llen=lpath.getTotalLength();lpath.style.strokeDasharray=llen;}});
+</script>
+</body>
+</html>

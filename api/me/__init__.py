@@ -47,14 +47,15 @@ def get_user_access(email):
         ]
 
     conn = get_sql_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT project, role FROM UserDatasetAccess WHERE email = ?",
-        email
-    )
-
-    rows = cursor.fetchall()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT project, role FROM UserDatasetAccess WHERE email = ?",
+            email
+        )
+        rows = cursor.fetchall()
+    finally:
+        conn.close()
 
     if not rows:
         return []
@@ -67,19 +68,22 @@ def get_user_access(email):
 def get_sql_connection():
     import pyodbc
     conn_str = os.environ["SQL_CONNECTION_STRING"]
-    return pyodbc.connect(conn_str)
+    return pyodbc.connect(conn_str, timeout=10)
 
 def log_access(email, project, outcome):
     if APP_ENV == "development":
         return
     try:
         conn = get_sql_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO AuditLog (email, project, outcome) VALUES (?, ?, ?)",
-            (email, project, outcome)
-        )
-        conn.commit()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO AuditLog (email, project, outcome) VALUES (?, ?, ?)",
+                (email, project, outcome)
+            )
+            conn.commit()
+        finally:
+            conn.close()
     except Exception:
         logging.exception("Failed to write audit log")
 
@@ -270,7 +274,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             mimetype="application/json"
         )
 
-    except Exception as exc:
+    except Exception:
         logging.exception("Unhandled exception in /api/me")
 
         body = {"error": "Internal server error"}
