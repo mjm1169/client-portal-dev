@@ -148,12 +148,12 @@ async function loadData(container, user, projectId = null, isRetry = false) {
         return;
       }
       if (res.status === 500 && !isRetry) {
-        chartEl.innerHTML = `<div class="chart-loading">Starting up, trying again…</div>`;
+        chartEl.innerHTML = `<div class="chart-loading">Database is starting up — retrying now (may take up to 30 seconds)…</div>`;
         setTimeout(() => loadData(container, user, projectId, true), 2000);
         return;
       }
       if (res.status === 500 && isRetry) {
-        chartEl.innerHTML = `<div class="chart-loading">Still starting up, reloading page…</div>`;
+        chartEl.innerHTML = `<div class="chart-loading">Still starting up — reloading page in 2 seconds…</div>`;
         setTimeout(() => window.location.reload(), 2000);
         return;
       }
