@@ -5,6 +5,10 @@
       "allowedRoles": ["authenticated"]
     },
     {
+      "route": "/reports/*",
+      "allowedRoles": ["authenticated"]
+    },
+    {
       "route": "/*",
       "allowedRoles": ["anonymous"]
     }

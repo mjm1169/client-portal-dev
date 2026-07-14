@@ -1,11 +1,14 @@
 import azure.functions as func
-import base64
 import json
 import os
 import logging
-from azure.storage.blob import BlobServiceClient
 import csv
 import io
+
+from shared.auth import get_user_email
+from shared.blob import download_blob_text
+from shared.db import log_access
+from shared.product_access import get_product_access
 
 # -----------------------------------
 # ENVIRONMENT
@@ -13,100 +16,20 @@ import io
 APP_ENV = os.environ.get("APP_ENV", "production")
 
 
-# -----------------------------------
-# AUTH
-# -----------------------------------
-def get_user_email(req):
-    header = req.headers.get("x-ms-client-principal")
-
-    if not header:
-        if APP_ENV == "development":
-            return "local.user@company.com"
-        return None
-
-    try:
-        decoded = base64.b64decode(header)
-        principal = json.loads(decoded)
-        email = principal.get("userDetails")
-
-        if not email or "@" not in email:
-            return None
-
-        return email.lower()
-
-    except Exception:
-        return None
 def get_user_access(email):
-    # In development, ODBC Driver 18 for SQL Server may not be installed locally.
-    # We skip the DB call and return a hardcoded record so the rest of the app
-    # (blob fetch, tree build, filter) can still be exercised end-to-end.
-    if APP_ENV == "development":
-        return [
-            {"project": "project1", "role": "/NHS"},
-            {"project": "project2", "role": "/Zippy"}
-        ]
-
-    conn = get_sql_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT project, role FROM UserDatasetAccess WHERE email = ?",
-            email
-        )
-        rows = cursor.fetchall()
-    finally:
-        conn.close()
-
-    if not rows:
-        return []
-
-    return [{"project": row[0], "role": row[1]} for row in rows]
-
-# -----------------------------------
-# DATASET ACCESS (SQL optional)
-# -----------------------------------
-def get_sql_connection():
-    import pyodbc
-    conn_str = os.environ["SQL_CONNECTION_STRING"]
-    conn = pyodbc.connect(conn_str, timeout=10)
-    conn.timeout = 30  # statement (query execution) timeout in seconds
-    return conn
-
-def log_access(email, project, outcome, detail=None):
-    if APP_ENV == "development":
-        return
-    outcome_value = f"{outcome}: {detail[:200]}" if detail else outcome
-    try:
-        conn = get_sql_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO AuditLog (email, project, outcome) VALUES (?, ?, ?)",
-                (email, project, outcome_value)
-            )
-            conn.commit()
-        finally:
-            conn.close()
-    except Exception:
-        logging.exception("Failed to write audit log")
-
+    # ProductAccess.client -> "project", .attribute1 -> "role" (radial's hierarchy-path
+    # filter), .blob_name -> the blob's name within that client's folder.
+    grants = get_product_access(email, "radial")
+    return [
+        {"project": g["client"], "role": g["attribute1"], "blob_name": g["blob_name"]}
+        for g in grants
+    ]
 
 # -----------------------------------
 # BLOB ACCESS
 # -----------------------------------
 def get_csv_from_blob(blob_path):
-    conn_str = os.environ["BLOB_CONNECTION_STRING"]
-    container_name = os.environ["BLOB_CONTAINER_NAME"]
-
-    blob_service_client = BlobServiceClient.from_connection_string(conn_str)
-    blob_client = blob_service_client.get_blob_client(
-        container=container_name,
-        blob=blob_path
-    )
-
-    blob_data = blob_client.download_blob().readall()
-
-    text = blob_data.decode("utf-8-sig")
+    text = download_blob_text(blob_path)
     csv_file = io.StringIO(text)
 
     sample = csv_file.read(1024)
@@ -255,7 +178,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         project_id = access["project"]
         role = access["role"]
 
-        hierarchy_file = f"{project_id}/data.csv"
+        hierarchy_file = f"{project_id}/{access['blob_name']}"
 
         rows = get_csv_from_blob(hierarchy_file)
         label_map = extract_labels(rows)

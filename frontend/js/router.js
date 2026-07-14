@@ -4,6 +4,7 @@ import { mountLogin } from "./pages/login.js";
 import { mountRadial } from "./pages/radial.js";
 import { mountUserRadial } from "./pages/userRadial.js";
 import { mountScrollytelling } from "./pages/scrollytelling.js";
+import { mountIndustryAnalytics } from "./pages/industryAnalytics.js";
 
 const app = document.getElementById("app");
 
@@ -44,6 +45,8 @@ async function router() {
     mountUserRadial(app, user);
   } else if (path === "/scrollytelling") {
     mountScrollytelling(app);
+  } else if (path === "/industryanalytics") {
+    mountIndustryAnalytics(app);
   } else if (path === "/login") {
     mountLogin(app);
   } else {

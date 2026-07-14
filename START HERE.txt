@@ -10,6 +10,7 @@ cd api
 func start
 
 Terminal 2 — Frontend (from frontend/):
+cd frontend
 npm run dev
 
 git pull --rebase origin main && git push
@@ -21,3 +22,24 @@ http://localhost:4280/.auth/login/aad
 Add to SQL DB
 INSERT INTO UserDatasetAccess (email, datasetFile)
 VALUES ('colleague@yourcompany.com', 'data1.csv');
+
+INSERT INTO ProductAccess (email, product, client, blob_name, attribute1, granted_by) VALUES
+    ('matty.mason@ipsos.com', 'radial', 'project1', 'data.csv', '/NHS', 'matty.mason@ipsos.com'),
+    ('matty.mason@ipsos.com', 'radial', 'project2', 'data.csv', '/Zippy', 'matty.mason@ipsos.com');
+
+INSERT INTO ProductAccess (email, product, client, blob_name, granted_by) VALUES
+    ('matty.mason@ipsos.com', 'scrollytelling',     'General', 'ippy-scrollytelling-report.html', 'matty.mason@ipsos.com'),
+    ('matty.mason@ipsos.com', 'industry_analytics', 'General', '<report_R1001.pdf',               'matty.mason@ipsos.com');
+
+CREATE TABLE ProductAccess (
+    email       NVARCHAR(255)  NOT NULL,
+    product     NVARCHAR(100)  NOT NULL,
+    client      NVARCHAR(100)  NOT NULL,
+    blob_name   NVARCHAR(255)  NOT NULL,
+    attribute1  NVARCHAR(255)  NULL,
+    attribute2  NVARCHAR(255)  NULL,
+    attribute3  NVARCHAR(255)  NULL,
+    granted_at  DATETIME2      NOT NULL DEFAULT SYSUTCDATETIME(),
+    granted_by  NVARCHAR(255)  NULL,
+    CONSTRAINT PK_ProductAccess PRIMARY KEY (email, product, client, blob_name)
+);
