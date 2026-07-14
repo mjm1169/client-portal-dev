@@ -10,7 +10,7 @@ from shared.db import log_access
 from shared.product_access import get_product_access
 
 # Each product lives in its own blob container, so keep "product" to a safe, known set.
-KNOWN_PRODUCTS = {"scrollytelling", "industry_analytics"}
+KNOWN_PRODUCTS = {"scrollytelling", "industry-analytics"}
 
 _PRODUCT_RE = re.compile(r"^[a-z0-9_-]+$")
 

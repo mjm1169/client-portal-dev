@@ -13,7 +13,7 @@ export async function mountIndustryAnalytics(container) {
   const listEl   = container.querySelector('#reportList');
 
   try {
-    const res = await fetch('/api/reports/industry_analytics');
+    const res = await fetch('/api/reports/industry-analytics');
 
     if (!res.ok) {
       statusEl.textContent = res.status === 403
