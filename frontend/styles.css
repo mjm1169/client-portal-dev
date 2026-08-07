@@ -461,6 +461,32 @@ body {
   border: none;
 }
 
+.report-back-link {
+  /* display:flex (not inline-flex) so the bottom margin is unambiguously a
+     block-level margin — inline-level boxes have historically inconsistent
+     vertical-margin behaviour, which was leaving next to no gap below it. */
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  margin: var(--space-md) var(--space-lg) var(--space-lg);
+  padding: 7px 16px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: #333;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.report-back-link:hover {
+  background: #f5f5f5;
+  border-color: var(--color-accent);
+  color: var(--color-accent-dark);
+}
+
 /* ===============================
    INDUSTRY ANALYTICS / REPORT LIST
 ================================ */
