@@ -1,16 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220">
-  <circle cx="110" cy="110" r="104" fill="#f4f5f9"/>
-
-  <!-- Six segment wedges, echoing the six-persona split -->
-  <g transform="translate(110,110)">
-    <path d="M0 0 L0 -86 A86 86 0 0 1 74.5 -43 Z" fill="#131B5A"/>
-    <path d="M0 0 L74.5 -43 A86 86 0 0 1 74.5 43 Z" fill="#0F6B72"/>
-    <path d="M0 0 L74.5 43 A86 86 0 0 1 0 86 Z" fill="#6B2D5C"/>
-    <path d="M0 0 L0 86 A86 86 0 0 1 -74.5 43 Z" fill="#A8631B"/>
-    <path d="M0 0 L-74.5 43 A86 86 0 0 1 -74.5 -43 Z" fill="#A83232"/>
-    <path d="M0 0 L-74.5 -43 A86 86 0 0 1 0 -86 Z" fill="#4B5563"/>
+  <g transform="translate(110,110)" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round">
+    <path d="M0 0 L0 -92 A92 92 0 0 1 79.7 -46 Z" fill="#4a4a4a"/>
+    <path d="M0 0 L79.7 -46 A92 92 0 0 1 79.7 46 Z" fill="#6b6b6b"/>
+    <path d="M0 0 L79.7 46 A92 92 0 0 1 0 92 Z" fill="#8c8c8c"/>
+    <path d="M0 0 L0 92 A92 92 0 0 1 -79.7 46 Z" fill="#aaaaaa"/>
+    <path d="M0 0 L-79.7 46 A92 92 0 0 1 -79.7 -46 Z" fill="#c6c6c6"/>
+    <path d="M0 0 L-79.7 -46 A92 92 0 0 1 0 -92 Z" fill="#e0e0e0"/>
   </g>
 
-  <circle cx="110" cy="110" r="34" fill="#ffffff"/>
-  <circle cx="110" cy="110" r="34" fill="none" stroke="#131B5A" stroke-width="2"/>
+  <circle cx="110" cy="110" r="92" fill="none" stroke="#3a3a3a" stroke-width="3"/>
+  <circle cx="110" cy="110" r="36" fill="#ffffff" stroke="#3a3a3a" stroke-width="3"/>
 </svg>

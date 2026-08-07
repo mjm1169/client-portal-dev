@@ -144,13 +144,14 @@ export function mountSegmentation(container) {
     return `
       <div class="persona-card">
         <div class="persona-card__top">
-          <div class="persona-avatar" style="background:${p.accent}">${initialsOf(p)}</div>
+          <div class="persona-avatar" style="background:${p.accent}; color:${p.avatarText}">${initialsOf(p)}</div>
           <label class="persona-compare-toggle">
             <input type="checkbox" data-action="toggle-compare" data-id="${p.id}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}>
             Compare
           </label>
         </div>
         <h3>${p.name}</h3>
+        <p class="persona-archetype">${p.archetype}</p>
         <p class="persona-tagline">“${p.tagline}”</p>
         <span class="persona-size-badge">${p.size}% of workforce</span>
         <div class="persona-top-channels">
@@ -169,9 +170,11 @@ export function mountSegmentation(container) {
         const selected = score >= SELECTION_THRESHOLD;
         return `
           <div class="pref-bar-row">
-            <span class="pref-bar-row__label">${c.label}</span>
+            <div class="pref-bar-row__top">
+              <span class="pref-bar-row__label">${c.label}</span>
+              <span class="pref-bar-value">${score}</span>
+            </div>
             <div class="pref-bar-track"><div class="pref-bar-fill" style="width:${score}%; background:${selected ? p.accent : "#ccc"}"></div></div>
-            <span class="pref-bar-value">${score}</span>
           </div>
         `;
       }).join("");
@@ -211,13 +214,14 @@ export function mountSegmentation(container) {
       <button type="button" class="report-back-link" data-action="back-to-grid">‹ All personas</button>
       <div class="persona-detail">
         <div class="persona-detail__header" style="border-left-color:${p.accent}">
-          <div class="persona-avatar persona-avatar--lg" style="background:${p.accent}">${initialsOf(p)}</div>
+          <div class="persona-avatar persona-avatar--lg" style="background:${p.accent}; color:${p.avatarText}">${initialsOf(p)}</div>
           <div>
             <h2>${p.name}</h2>
+            <p class="persona-archetype">${p.archetype}</p>
             <p class="persona-tagline">“${p.tagline}”</p>
             <span class="persona-size-badge">${p.size}% of workforce</span>
           </div>
-          <button type="button" class="btn-primary" data-action="open-chat" data-id="${p.id}">Chat as this persona</button>
+          <button type="button" class="btn-primary" data-action="open-chat" data-id="${p.id}">Chat with ${p.name}</button>
         </div>
 
         <p class="persona-summary">${p.summary}</p>
@@ -252,12 +256,13 @@ export function mountSegmentation(container) {
     return `
       <div class="compare-persona-card" style="border-top-color:${p.accent}">
         <div class="persona-card__top">
-          <div class="persona-avatar" style="background:${p.accent}">${initialsOf(p)}</div>
+          <div class="persona-avatar" style="background:${p.accent}; color:${p.avatarText}">${initialsOf(p)}</div>
           <span class="persona-size-badge">${p.size}% of workforce</span>
         </div>
         <h3>${p.name}</h3>
+        <p class="persona-archetype">${p.archetype}</p>
         <p class="persona-tagline">“${p.tagline}”</p>
-        <button type="button" class="btn-secondary" data-action="open-chat" data-id="${p.id}">Chat as this persona</button>
+        <button type="button" class="btn-secondary" data-action="open-chat" data-id="${p.id}">Chat with ${p.name}</button>
       </div>
     `;
   }
@@ -421,9 +426,13 @@ export function mountSegmentation(container) {
 
   function renderMessages() {
     const history = chatHistories[activeChatPersonaId] || [];
+    const persona = getPersona(activeChatPersonaId);
+    const placeholder = getStoredKey()
+      ? `<div class="chat-msg chat-msg--system">Save your API key below and ${persona?.name || "this persona"} will say hello. You're chatting with a simulated persona built from its dummy survey data, not a real employee.</div>`
+      : `<div class="chat-msg chat-msg--system">Add your API key below to start chatting. You're chatting with a simulated persona built from its dummy survey data, not a real employee.</div>`;
     chatMessages.innerHTML = history.map(m => `
       <div class="chat-msg ${m.role === "user" ? "chat-msg--user" : "chat-msg--persona"}">${escapeHtml(m.text)}</div>
-    `).join("") || `<div class="chat-msg chat-msg--system">Say hello — you're chatting with a simulated persona built from its dummy survey data, not a real employee.</div>`;
+    `).join("") || placeholder;
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
@@ -438,9 +447,10 @@ export function mountSegmentation(container) {
     if (!p) return;
     activeChatPersonaId = id;
     chatAvatar.style.background = p.accent;
+    chatAvatar.style.color = p.avatarText;
     chatAvatar.textContent = initialsOf(p);
     chatPersonaName.textContent = p.name;
-    chatPersonaTagline.textContent = `“${p.tagline}”`;
+    chatPersonaTagline.textContent = `${p.archetype} — “${p.tagline}”`;
     chatHistories[id] = chatHistories[id] || [];
     renderMessages();
 
@@ -451,6 +461,10 @@ export function mountSegmentation(container) {
     chatBackdrop.style.display = "flex";
     document.addEventListener("keydown", onChatEscKey);
     chatInput.focus();
+
+    // Key already saved from a previous persona this session — greet
+    // straight away rather than waiting on a Save click that isn't coming.
+    if (getStoredKey()) sendOpeningGreeting();
   }
 
   function closeChat() {
@@ -477,7 +491,41 @@ export function mountSegmentation(container) {
     if (key) sessionStorage.setItem(KEY_STORAGE_KEY, key);
     sessionStorage.setItem(MODEL_STORAGE_KEY, model);
     chatSettingsPanel.style.display = "none";
+    if (key) sendOpeningGreeting();
   });
+
+  // Has the persona say hello first, so saving a key feels like walking into
+  // a live conversation rather than an empty text box. Only fires once per
+  // persona per page load — if there's already a message in the thread
+  // (e.g. the key was just being re-saved), it stays quiet.
+  async function sendOpeningGreeting() {
+    if (!activeChatPersonaId || sending) return;
+    const history = chatHistories[activeChatPersonaId];
+    if (!history || history.length > 0) return;
+
+    const apiKey = getStoredKey();
+    if (!apiKey) return;
+    const persona = getPersona(activeChatPersonaId);
+
+    sending = true;
+    chatSendBtn.disabled = true;
+    chatMessages.innerHTML = `<div class="chat-msg chat-msg--typing" id="chatTyping">${persona.name} is typing…</div>`;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    try {
+      const kickoff = [{ role: "user", text: "(Start the conversation: say a brief, natural, in-character hello to open the chat. 1-2 sentences, no more.)" }];
+      const reply = await sendToGemini(persona, apiKey, getStoredModel(), kickoff);
+      history.push({ role: "model", text: reply });
+      renderMessages();
+    } catch (err) {
+      chatMessages.querySelector("#chatTyping")?.remove();
+      chatMessages.insertAdjacentHTML("beforeend", `<div class="chat-msg chat-msg--system">${escapeHtml(err.message || "Something went wrong talking to the AI provider.")}</div>`);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    } finally {
+      sending = false;
+      chatSendBtn.disabled = false;
+    }
+  }
 
   chatSettingsClear.addEventListener("click", () => {
     sessionStorage.removeItem(KEY_STORAGE_KEY);
