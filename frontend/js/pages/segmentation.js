@@ -17,9 +17,20 @@ const KEY_STORAGE_KEY = "segChat:apiKey";
 const MODEL_STORAGE_KEY = "segChat:model";
 const DEFAULT_MODEL = "gemini-3.5-flash-lite";
 
-function initialsOf(persona) {
-  const words = persona.name.replace(/^The\s+/i, "").split(" ").filter(Boolean);
-  return ((words[0]?.[0] || "") + (words[1]?.[0] || "")).toUpperCase();
+// Each persona's colored circle shows its segment number (1-6) rather than
+// initials — keeps the six segments easy to tell apart at a glance without
+// implying these are real named individuals in a way that reads as literal.
+function workforceBarHtml(persona) {
+  const segments = [...PERSONAS]
+    .sort((a, b) => a.number - b.number)
+    .map(seg => `<div class="workforce-bar__seg" style="width:${seg.size}%; background:${seg.accent}; opacity:${seg.id === persona.id ? 1 : 0.1}"></div>`)
+    .join("");
+  return `
+    <div class="workforce-bar">
+      <span class="persona-size-badge">${persona.size}% of workforce</span>
+      <div class="workforce-bar__track">${segments}</div>
+    </div>
+  `;
 }
 
 async function sendToGemini(persona, apiKey, model, history) {
@@ -144,7 +155,7 @@ export function mountSegmentation(container) {
     return `
       <div class="persona-card">
         <div class="persona-card__top">
-          <div class="persona-avatar" style="background:${p.accent}; color:${p.avatarText}">${initialsOf(p)}</div>
+          <div class="persona-avatar" style="background:${p.accent}; color:${p.avatarText}">${p.number}</div>
           <label class="persona-compare-toggle">
             <input type="checkbox" data-action="toggle-compare" data-id="${p.id}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}>
             Compare
@@ -153,7 +164,7 @@ export function mountSegmentation(container) {
         <h3>${p.name}</h3>
         <p class="persona-archetype">${p.archetype}</p>
         <p class="persona-tagline">“${p.tagline}”</p>
-        <span class="persona-size-badge">${p.size}% of workforce</span>
+        ${workforceBarHtml(p)}
         <div class="persona-top-channels">
           ${topChannels(p, 3).map(c => `<span class="channel-pill">${c.label}</span>`).join("")}
         </div>
@@ -212,27 +223,27 @@ export function mountSegmentation(container) {
 
     return `
       <button type="button" class="report-back-link" data-action="back-to-grid">‹ All personas</button>
-      <div class="persona-detail">
+      <div class="persona-detail" style="--persona-accent:${p.accent}">
         <div class="persona-detail__header" style="border-left-color:${p.accent}">
-          <div class="persona-avatar persona-avatar--lg" style="background:${p.accent}; color:${p.avatarText}">${initialsOf(p)}</div>
+          <div class="persona-avatar persona-avatar--lg" style="background:${p.accent}; color:${p.avatarText}">${p.number}</div>
           <div>
             <h2>${p.name}</h2>
             <p class="persona-archetype">${p.archetype}</p>
             <p class="persona-tagline">“${p.tagline}”</p>
-            <span class="persona-size-badge">${p.size}% of workforce</span>
+            ${workforceBarHtml(p)}
           </div>
-          <button type="button" class="btn-primary" data-action="open-chat" data-id="${p.id}">Chat with ${p.name}</button>
+          <button type="button" class="btn-primary" data-action="open-chat" data-id="${p.id}" style="background:${p.accent}; border-color:${p.accent}; color:${p.avatarText}">Chat with ${p.name}</button>
         </div>
 
         <p class="persona-summary">${p.summary}</p>
 
         <div class="persona-detail__grid">
-          <section>
+          <section class="detail-card">
             <h3>Preferred communication channels</h3>
             <p class="section-hint">From "Which communications channels do you prefer to use?" (multi-select, ${SELECTION_THRESHOLD}+ counts as selected)</p>
             ${channelBarsHtml(p)}
           </section>
-          <section>
+          <section class="detail-card">
             <h3>Engagement &amp; comms audit</h3>
             <div class="stat-tiles">${stats}</div>
             <dl class="persona-audit-list">
@@ -244,7 +255,7 @@ export function mountSegmentation(container) {
           </section>
         </div>
 
-        <section class="persona-demographics">
+        <section class="persona-demographics detail-card">
           <h3>Who's in this segment</h3>
           <div class="stat-tiles stat-tiles--demo">${demo}</div>
         </section>
@@ -256,13 +267,13 @@ export function mountSegmentation(container) {
     return `
       <div class="compare-persona-card" style="border-top-color:${p.accent}">
         <div class="persona-card__top">
-          <div class="persona-avatar" style="background:${p.accent}; color:${p.avatarText}">${initialsOf(p)}</div>
-          <span class="persona-size-badge">${p.size}% of workforce</span>
+          <div class="persona-avatar" style="background:${p.accent}; color:${p.avatarText}">${p.number}</div>
         </div>
         <h3>${p.name}</h3>
         <p class="persona-archetype">${p.archetype}</p>
         <p class="persona-tagline">“${p.tagline}”</p>
-        <button type="button" class="btn-secondary" data-action="open-chat" data-id="${p.id}">Chat with ${p.name}</button>
+        ${workforceBarHtml(p)}
+        <button type="button" class="btn-secondary" data-action="open-chat" data-id="${p.id}" style="background:${p.accent}; border-color:${p.accent}; color:${p.avatarText}">Chat with ${p.name}</button>
       </div>
     `;
   }
@@ -448,7 +459,7 @@ export function mountSegmentation(container) {
     activeChatPersonaId = id;
     chatAvatar.style.background = p.accent;
     chatAvatar.style.color = p.avatarText;
-    chatAvatar.textContent = initialsOf(p);
+    chatAvatar.textContent = p.number;
     chatPersonaName.textContent = p.name;
     chatPersonaTagline.textContent = `${p.archetype} — “${p.tagline}”`;
     chatHistories[id] = chatHistories[id] || [];

@@ -25,6 +25,7 @@ export const SELECTION_THRESHOLD = 50;
 export const PERSONAS = [
   {
     id: "traditional-emailer",
+    number: 1,
     name: "Margaret Ellis",
     archetype: "The Traditional Emailer",
     tagline: "If it matters, it belongs in my inbox.",
@@ -58,6 +59,7 @@ export const PERSONAS = [
   },
   {
     id: "face-to-face-believer",
+    number: 2,
     name: "Daniel Osei",
     archetype: "The Face-to-Face Believer",
     tagline: "I trust what my manager tells me in person.",
@@ -91,6 +93,7 @@ export const PERSONAS = [
   },
   {
     id: "social-connector",
+    number: 3,
     name: "Priya Kapoor",
     archetype: "The Social Connector",
     tagline: "The real conversation happens on Yammer.",
@@ -124,6 +127,7 @@ export const PERSONAS = [
   },
   {
     id: "multichannel-pragmatist",
+    number: 4,
     name: "Tom Reynolds",
     archetype: "The Multi-Channel Pragmatist",
     tagline: "I'll take the update wherever it lands first.",
@@ -157,6 +161,7 @@ export const PERSONAS = [
   },
   {
     id: "quiet-disengaged",
+    number: 5,
     name: "Chloe Bennett",
     archetype: "The Quiet Disengaged",
     tagline: "Most of it washes over me either way.",
@@ -190,6 +195,7 @@ export const PERSONAS = [
   },
   {
     id: "visual-video-learner",
+    number: 6,
     name: "Marcus Odhiambo",
     archetype: "The Visual & Video Learner",
     tagline: "A two-minute video tells me more than a page of text.",
