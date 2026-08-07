@@ -64,6 +64,22 @@ export function mountHome(container, user) {
 
       </div>
 
+      <div class="feature-card" id="goSegmentation">
+
+        <div class="feature-card__image">
+          <img src="assets/segmentation_icon.svg" alt="Segmentation explorer preview">
+        </div>
+
+        <div class="feature-card__content">
+          <h2>Segmentation Explorer</h2>
+          <p>
+            Explore employee comms personas, compare any two side by side,
+            and chat directly with a persona to test messages on them.
+          </p>
+        </div>
+
+      </div>
+
       <div class="feature-card${unlocked ? '' : ' feature-card--locked'}" id="goIndustryAnalytics">
 
         <div class="feature-card__image">
@@ -111,6 +127,9 @@ export function mountHome(container, user) {
   // });
   container.querySelector('#goScrollytelling').addEventListener('click', () => {
     window.location.hash = "/scrollytelling";
+  });
+  container.querySelector('#goSegmentation').addEventListener('click', () => {
+    window.location.hash = "/segmentation";
   });
 
   // Industry Analytics Reports — gated behind a mock "access" confirmation
