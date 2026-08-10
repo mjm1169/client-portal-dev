@@ -24,6 +24,15 @@ const KEY_STORAGE_KEY = "segChat:apiKey";
 const MODEL_STORAGE_KEY = "segChat:model";
 const DEFAULT_MODEL = "gemini-3.5-flash-lite";
 
+// Shared by the 1:1 chat modal and the "join the conversation" group chat —
+// one key, saved once, works in both places.
+function getStoredKey() {
+  return sessionStorage.getItem(KEY_STORAGE_KEY) || "";
+}
+function getStoredModel() {
+  return sessionStorage.getItem(MODEL_STORAGE_KEY) || DEFAULT_MODEL;
+}
+
 // Each persona's colored circle shows its segment number (1-6) rather than
 // initials — keeps the six segments easy to tell apart at a glance without
 // implying these are real named individuals in a way that reads as literal.
@@ -40,14 +49,8 @@ function workforceBarHtml(persona) {
   `;
 }
 
-async function sendToGemini(persona, apiKey, model, history) {
+async function callGemini(apiKey, model, body) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-  const body = {
-    systemInstruction: { parts: [{ text: buildPersonaSystemPrompt(persona) }] },
-    contents: history.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
-    generationConfig: { temperature: 0.8, maxOutputTokens: 400 },
-  };
 
   const res = await fetch(url, {
     method: "POST",
@@ -68,6 +71,89 @@ async function sendToGemini(persona, apiKey, model, history) {
   const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text).join("") || "";
   if (!text) throw new Error("No response text came back — the reply may have been blocked by a safety filter.");
   return text;
+}
+
+async function sendToGemini(persona, apiKey, model, history) {
+  return callGemini(apiKey, model, {
+    systemInstruction: { parts: [{ text: buildPersonaSystemPrompt(persona) }] },
+    contents: history.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
+    generationConfig: { temperature: 0.8, maxOutputTokens: 400 },
+  });
+}
+
+const GROUP_CHAT_INSTRUCTION =
+  "You're now in a live group call with several colleagues, continuing the conversation you were " +
+  "just having. Other people's lines in this thread are prefixed with their name so you know who " +
+  "said which — yours are not, since they're your own words. Reply naturally and briefly, as you " +
+  "would out loud on a call (1-3 sentences), and don't add a name prefix to your own reply.";
+
+// Turns a shared, multi-party transcript (the scripted intro plus whatever's
+// been said live since "Join the conversation") into the strict user/model
+// turn sequence the Gemini API expects, from one persona's point of view:
+// their own lines become "model" turns, everyone else's (other personas AND
+// the human user) become "user" turns prefixed with who said them.
+function groupHistoryFor(persona, transcript) {
+  const turns = transcript.map(entry => (
+    entry.speakerId === persona.id
+      ? { role: "model", text: entry.text }
+      : { role: "user", text: `${entry.speakerName}: ${entry.text}` }
+  ));
+  return [{ role: "user", text: GROUP_CHAT_INSTRUCTION }, ...turns];
+}
+
+// --- Deciding who replies ---------------------------------------------------
+// Two-tier, cheapest-first: a named mention costs nothing and is unambiguous
+// ("Margaret, does that work for you?" -> only Margaret). Otherwise, one
+// lightweight routing call picks who'd realistically chime in, so a general
+// question doesn't always drag all six into replying. Either step can come
+// back empty, so the last resort is everyone — better a noisy reply than a
+// message that visibly goes nowhere.
+
+function detectAddressedPersonas(text) {
+  return PERSONAS
+    .filter(p => new RegExp(`\\b${p.name.split(" ")[0]}\\b`, "i").test(text))
+    .sort((a, b) => a.number - b.number);
+}
+
+const ROUTER_SYSTEM_INSTRUCTION =
+  "You are a silent routing assistant for a simulated employee comms group chat. You never speak " +
+  "in the conversation yourself — you only decide, given the roster and the latest message, which " +
+  "people would realistically jump in to reply, based on their communication style and interests. " +
+  "Usually 1-3 people; it's fine to pick just one, or occasionally none if the message doesn't " +
+  "really call for a reply from this group. Respond with ONLY a JSON array of ids from the roster " +
+  'and nothing else, e.g. ["some-id","other-id"].';
+
+function personaRosterText() {
+  return PERSONAS.map(p =>
+    `- id "${p.id}": ${p.name}, ${p.archetype.toLowerCase()}. "${p.tagline}" Favours ${topChannels(p, 2).map(c => c.label).join(" and ")}.`
+  ).join("\n");
+}
+
+async function routeGroupMessage(apiKey, model, transcript, latestMessage) {
+  const recent = transcript.slice(-8).map(e => `${e.speakerName}: ${e.text}`).join("\n") || "(nothing said yet)";
+  const prompt = `Roster:\n${personaRosterText()}\n\nRecent conversation:\n${recent}\n\nNewest message: "${latestMessage}"\n\nWhich people would realistically reply? JSON array of ids only.`;
+
+  const text = await callGemini(apiKey, model, {
+    systemInstruction: { parts: [{ text: ROUTER_SYSTEM_INSTRUCTION }] },
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.2, maxOutputTokens: 80, responseMimeType: "application/json" },
+  });
+
+  const ids = JSON.parse(text);
+  return Array.isArray(ids) ? ids.map(id => getPersona(id)).filter(Boolean) : [];
+}
+
+async function pickRespondents(apiKey, model, transcript, text) {
+  const named = detectAddressedPersonas(text);
+  if (named.length > 0) return named;
+
+  try {
+    const routed = await routeGroupMessage(apiKey, model, transcript, text);
+    if (routed.length > 0) return routed.sort((a, b) => a.number - b.number);
+  } catch (err) {
+    console.warn("Group chat routing call failed, defaulting to everyone replying:", err);
+  }
+  return [...PERSONAS].sort((a, b) => a.number - b.number);
 }
 
 // --- Entry point: landing choice -------------------------------------------
@@ -139,6 +225,7 @@ function mountMeetSegments(container) {
 
       <div class="group-chat-participants" id="groupChatParticipants"></div>
       <div class="group-chat-messages" id="groupChatMessages"></div>
+      <div class="group-chat-join-panel" id="groupJoinPanel"></div>
     </div>
 
     <div id="explorerMount"></div>
@@ -155,6 +242,7 @@ function mountMeetSegments(container) {
   const participantsEl = container.querySelector("#groupChatParticipants");
   const messagesEl = container.querySelector("#groupChatMessages");
   const skipBtn = container.querySelector("#skipToData");
+  const joinPanel = container.querySelector("#groupJoinPanel");
   const voiceToggleWrap = container.querySelector("#voiceToggleWrap");
   const voiceToggle = container.querySelector("#voiceToggle");
 
@@ -165,6 +253,14 @@ function mountMeetSegments(container) {
   let cancelled = false;
   const joined = new Set();
 
+  // Shared memory for the live phase: everything said in the scripted intro
+  // plus everything said once the human joins, in one flat log. Each live
+  // reply is built from this, so personas stay aware of the whole call, not
+  // just what happened after they started actually thinking for themselves.
+  const groupTranscript = [];
+  let hasJoinedConversation = false;
+  let groupSending = false;
+
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -173,9 +269,21 @@ function mountMeetSegments(container) {
     explorerMount.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  // The button lives at the bottom of the conversation rather than in the
+  // header — it only makes sense once there's actually a conversation to
+  // join, so it appears right where that conversation currently ends.
+  function enableJoinButton() {
+    if (hasJoinedConversation || joinPanel.querySelector("#joinConversationBtn")) return;
+    joinPanel.innerHTML = `
+      <button type="button" class="btn-primary" id="joinConversationBtn">Join the conversation</button>
+    `;
+    joinPanel.querySelector("#joinConversationBtn").addEventListener("click", startJoinedConversation);
+  }
+
   skipBtn.addEventListener("click", () => {
     cancelled = true;
     window.speechSynthesis?.cancel();
+    enableJoinButton(); // skipping still means the scripted part is "done"
     scrollToExplorer();
   });
 
@@ -261,6 +369,9 @@ function mountMeetSegments(container) {
         </div>
       </div>
     `);
+    // Scripted lines join the same log the live replies read from, so
+    // whoever the human ends up talking to already "remembers" this part.
+    groupTranscript.push({ speakerId: persona.id, speakerName: persona.name, text });
 
     if (voiceToggle.checked) {
       // The audio itself paces this — just a small breather once it ends.
@@ -285,9 +396,161 @@ function mountMeetSegments(container) {
       }
     }
     if (!cancelled) {
+      enableJoinButton();
       await sleep(600);
       scrollToExplorer();
     }
+  }
+
+  // --- "Join the conversation": live, AI-generated group chat ------------
+  // Same visible thread as the scripted intro above, continued for real.
+  // Every persona replies to each message you send, in segment-size order,
+  // each grounded in its own data plus the full transcript so far (scripted
+  // and live) via groupHistoryFor().
+
+  function scrollLatestIntoView() {
+    messagesEl.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  async function addLiveReply(persona, apiKey, model) {
+    const typingId = `group-chat-live-typing-${Date.now()}-${persona.number}`;
+    messagesEl.insertAdjacentHTML("beforeend", `
+      <div class="group-chat-msg group-chat-msg--typing" id="${typingId}">
+        <div class="persona-avatar" style="background:${persona.accent}; color:${persona.avatarText}">${persona.number}</div>
+        <div class="group-chat-msg__bubble" style="--persona-accent:${persona.accent}">
+          <span class="group-chat-msg__name">${persona.name}</span>
+          <span class="typing-dots"><span></span><span></span><span></span></span>
+        </div>
+      </div>
+    `);
+    scrollLatestIntoView();
+
+    try {
+      const reply = await sendToGemini(persona, apiKey, model, groupHistoryFor(persona, groupTranscript));
+      document.getElementById(typingId)?.remove();
+      groupTranscript.push({ speakerId: persona.id, speakerName: persona.name, text: reply });
+      messagesEl.insertAdjacentHTML("beforeend", `
+        <div class="group-chat-msg">
+          <div class="persona-avatar" style="background:${persona.accent}; color:${persona.avatarText}">${persona.number}</div>
+          <div class="group-chat-msg__bubble" style="--persona-accent:${persona.accent}">
+            <span class="group-chat-msg__name">${persona.name}</span>
+            ${escapeHtml(reply)}
+          </div>
+        </div>
+      `);
+      scrollLatestIntoView();
+      await speak(persona, reply);
+    } catch (err) {
+      document.getElementById(typingId)?.remove();
+      messagesEl.insertAdjacentHTML("beforeend", `<div class="group-chat-system-note">${persona.name} didn't reply — ${escapeHtml(err.message || "something went wrong talking to the AI provider.")}</div>`);
+      scrollLatestIntoView();
+    }
+  }
+
+  function renderJoinPanel() {
+    const hasKey = !!getStoredKey();
+    joinPanel.innerHTML = `
+      <div class="chat-settings-panel" id="groupChatSettingsPanel" style="display:${hasKey ? "none" : "flex"};">
+        <p class="chat-settings-note">
+          Bring-your-own-key, same as the 1:1 chat: kept only in this browser tab's session
+          storage, never sent anywhere but the AI provider, never saved to this app's server
+          or git. Save it once here and it works in both places.
+        </p>
+        <label>
+          Gemini API key
+          <input type="password" id="groupChatApiKeyInput" placeholder="AIza…" autocomplete="off" value="${getStoredKey()}">
+        </label>
+        <label>
+          Model id
+          <input type="text" id="groupChatModelInput" placeholder="${DEFAULT_MODEL}" value="${getStoredModel()}">
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn-primary" id="groupChatSettingsSave">Save</button>
+        </div>
+      </div>
+      <form class="chat-input-row" id="groupChatForm">
+        <textarea id="groupChatInput" rows="1" placeholder="Say something to the group…"></textarea>
+        <button type="submit" class="btn-primary" id="groupChatSendBtn">Send</button>
+      </form>
+    `;
+
+    const settingsPanel = joinPanel.querySelector("#groupChatSettingsPanel");
+    const apiKeyInput = joinPanel.querySelector("#groupChatApiKeyInput");
+    const modelInput = joinPanel.querySelector("#groupChatModelInput");
+    const form = joinPanel.querySelector("#groupChatForm");
+    const input = joinPanel.querySelector("#groupChatInput");
+    const sendBtn = joinPanel.querySelector("#groupChatSendBtn");
+
+    joinPanel.querySelector("#groupChatSettingsSave").addEventListener("click", () => {
+      const key = apiKeyInput.value.trim();
+      const model = modelInput.value.trim() || DEFAULT_MODEL;
+      if (key) sessionStorage.setItem(KEY_STORAGE_KEY, key);
+      sessionStorage.setItem(MODEL_STORAGE_KEY, model);
+      if (key) settingsPanel.style.display = "none";
+    });
+
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      if (groupSending) return;
+
+      const text = input.value.trim();
+      if (!text) return;
+
+      const apiKey = getStoredKey();
+      if (!apiKey) {
+        settingsPanel.style.display = "flex";
+        apiKeyInput.focus();
+        return;
+      }
+
+      // Render immediately — who ends up replying is decided next, but
+      // there's no reason to make the user's own message wait on that.
+      const priorTranscript = groupTranscript.slice();
+      groupTranscript.push({ speakerId: "user", speakerName: "You", text });
+      messagesEl.insertAdjacentHTML("beforeend", `
+        <div class="group-chat-msg group-chat-msg--you">
+          <div class="group-chat-msg__bubble">${escapeHtml(text)}</div>
+        </div>
+      `);
+      input.value = "";
+      scrollLatestIntoView();
+
+      groupSending = true;
+      sendBtn.disabled = true;
+      input.disabled = true;
+
+      const model = getStoredModel();
+      const respondents = await pickRespondents(apiKey, model, priorTranscript, text);
+      for (const persona of respondents) {
+        await addLiveReply(persona, apiKey, model);
+      }
+
+      groupSending = false;
+      sendBtn.disabled = false;
+      input.disabled = false;
+      input.focus();
+    });
+  }
+
+  function startJoinedConversation() {
+    if (hasJoinedConversation) return;
+    hasJoinedConversation = true;
+
+    messagesEl.insertAdjacentHTML("beforeend", `
+      <div class="group-chat-system-note">
+        You joined the call — from here, replies are generated live by AI (via your saved API
+        key), grounded in each persona's own data, not scripted like the introduction above.
+      </div>
+    `);
+    scrollLatestIntoView();
+    renderJoinPanel(); // replaces the button in #groupJoinPanel with the input
   }
 
   playScript();
@@ -660,13 +923,6 @@ function mountExplorer(container) {
   const chatSettingsSave = container.querySelector("#chatSettingsSave");
   const chatSettingsClear = container.querySelector("#chatSettingsClear");
   const chatCloseBtn = container.querySelector("#chatCloseBtn");
-
-  function getStoredKey() {
-    return sessionStorage.getItem(KEY_STORAGE_KEY) || "";
-  }
-  function getStoredModel() {
-    return sessionStorage.getItem(MODEL_STORAGE_KEY) || DEFAULT_MODEL;
-  }
 
   function renderMessages() {
     const history = chatHistories[activeChatPersonaId] || [];

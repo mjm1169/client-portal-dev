@@ -642,6 +642,12 @@ body {
   background: #eaeaea;
 }
 
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .project-selector {
   font-size: var(--text-sm);
   padding: 6px 8px;
@@ -987,6 +993,15 @@ body {
   gap: 12px;
 }
 
+.group-chat-join-panel:not(:empty) {
+  margin-top: var(--space-lg);
+}
+
+.group-chat-join-panel > #joinConversationBtn {
+  display: block;
+  margin: 0 auto;
+}
+
 .group-chat-system-note {
   text-align: center;
   font-size: var(--text-xs);
@@ -1018,6 +1033,19 @@ body {
   padding: 8px 14px;
   font-size: var(--text-sm);
   line-height: 1.45;
+}
+
+/* The human's own messages, once they've joined the live conversation —
+   right-aligned and filled solid so "your" lines are unmistakable against
+   the personas' white, left-bordered bubbles. */
+.group-chat-msg--you {
+  align-self: flex-end;
+}
+
+.group-chat-msg--you .group-chat-msg__bubble {
+  background: var(--color-accent);
+  border: none;
+  color: #fff;
 }
 
 .group-chat-msg__name {
