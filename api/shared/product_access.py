@@ -12,6 +12,7 @@ _DEV_GRANTS = {
     ],
     ("local.user@company.com", "scrollytelling"): [
         {"client": "Ippy", "blob_name": "ippy_scrollytelling_report.html", "attribute1": None, "attribute2": None, "attribute3": None},
+        {"client": "Ippy", "blob_name": "interactive-report-starter.html", "attribute1": None, "attribute2": None, "attribute3": None},
     ],
     ("local.user@company.com", "industry-analytics"): [
         {"client": "General", "blob_name": "report_R1001.pdf", "attribute1": None, "attribute2": None, "attribute3": None},

@@ -5,7 +5,7 @@ import re
 import azure.functions as func
 
 from shared.auth import get_user_email
-from shared.blob import generate_read_sas_url
+from shared.blob import generate_read_sas_url, get_html_metadata
 from shared.db import log_access
 from shared.product_access import get_product_access
 
@@ -57,12 +57,22 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         # Every grant the user has for this product, each with its own view (inline)
         # and download (forces Save As, correct filename even cross-origin) SAS url.
+        # Title/description are only worth reading (an extra blob fetch each) when
+        # there's actually a picker to label — skip them on the single-file path.
+        show_metadata = len(grants) > 1
         files = []
         for g in grants:
             g_blob_path = f"{g['client']}/{g['blob_name']}"
+            metadata = (
+                get_html_metadata(g_blob_path, container_name=container)
+                if show_metadata and g["blob_name"].lower().endswith(".html")
+                else {"title": None, "description": None}
+            )
             files.append({
                 "client": g["client"],
                 "blobName": g["blob_name"],
+                "title": metadata["title"],
+                "description": metadata["description"],
                 "viewUrl": generate_read_sas_url(g_blob_path, container_name=container),
                 "downloadUrl": generate_read_sas_url(
                     g_blob_path,

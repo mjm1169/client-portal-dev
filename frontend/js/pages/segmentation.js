@@ -225,7 +225,7 @@ function mountMeetSegments(container) {
   // How long the "…" bubble sits there before the message lands — modelling
   // typing time, not reading time.
   function typingDelay(text) {
-    return clamp(500 + wordCount(text) * 90, 900, 2200);
+    return clamp(500 + wordCount(text) * 200, 900, 2200);
   }
 
   // How long the message then sits on screen, alone, before the next thing
@@ -234,7 +234,7 @@ function mountMeetSegments(container) {
   // was missing before: text was landing and immediately getting buried by
   // the next "typing…" bubble.
   function readingDelay(text) {
-    return clamp(wordCount(text) * 380 + 500, 1400, 6500);
+    return clamp(wordCount(text) * 100 + 300, 1400, 6500);
   }
 
   async function addMessage(persona, text) {

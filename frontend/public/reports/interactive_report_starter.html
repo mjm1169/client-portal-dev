@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive report demo</title>
+<meta name="description" content="A tab-driven report, with interactivity and animation">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  :root{
+    --canvas:#F2F2F2;
+    --surface:#FAFAFA;
+    --ink:#1A1D23;
+    --muted:#6B7280;
+    --accent:#11CEEE;
+    --accent-step:#0A9AB3;
+    --positive:#CEEE11;
+    --positive-step:#8AAA05;
+    --negative:#EE11CE;
+    --negative-step:#B8009E;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Poppins',system-ui,sans-serif;font-weight:400;background:var(--canvas);color:var(--ink);}
+  .app{display:flex;min-height:100vh;}
+
+  .rail{width:240px;flex-shrink:0;background:var(--surface);padding:40px 0;}
+  .rail-title{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:400;padding:0 24px 20px;}
+  .rail-item{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;background:none;border:none;border-left:3px solid transparent;padding:14px 21px;font-family:inherit;font-size:14px;font-weight:400;color:var(--muted);cursor:pointer;line-height:1.35;}
+  .rail-item .num{font-size:11px;color:var(--muted);font-weight:300;}
+  .rail-item.active{border-left-color:var(--accent);color:var(--ink);font-weight:500;background:var(--canvas);}
+  .rail-item:hover:not(.active){color:var(--ink);}
+
+  .main{flex:1;padding:56px 48px;max-width:960px;margin:0 auto;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  h1{font-size:22px;font-weight:500;margin:0 0 8px;letter-spacing:-.01em;}
+  .sub{font-size:14px;color:var(--muted);font-weight:300;margin:0 0 32px;max-width:580px;line-height:1.55;}
+
+  .card{background:var(--surface);border:none;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:24px 24px 24px 21px;margin-bottom:24px;}
+
+  /* single-select cards (replacing radio buttons) */
+  .group-cards{display:flex;gap:10px;margin-bottom:28px;flex-wrap:wrap;}
+  .group-card{font-family:inherit;font-size:13px;font-weight:400;color:var(--muted);background:var(--canvas);border:none;border-left:3px solid transparent;border-radius:0 6px 6px 0;padding:10px 18px;cursor:pointer;text-align:left;}
+  .group-card.active{border-left-color:var(--accent);color:var(--ink);font-weight:500;background:#EDEDED;}
+  .group-card:hover:not(.active){color:var(--ink);}
+
+  .legend-row{display:flex;gap:24px;margin-bottom:20px;flex-wrap:wrap;}
+  .legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+  .legend-swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+
+  /* chart + commentary side-by-side */
+  .card-flex{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;}
+  .chart-col{flex:0 0 auto;}
+  .commentary-col{flex:1 1 220px;min-width:220px;padding-top:4px;}
+  .commentary{font-size:13px;color:var(--ink);font-weight:300;line-height:1.6;}
+
+  .axis-label-h{text-align:center;font-size:11px;color:var(--muted);font-weight:400;letter-spacing:.06em;text-transform:uppercase;margin-top:4px;}
+  .axis-label-v{writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;color:var(--muted);font-weight:400;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;margin-right:8px;}
+  .quad-inner{display:flex;align-items:center;}
+
+  .btn{font-family:inherit;font-size:13px;font-weight:400;color:var(--ink);background:var(--canvas);border:1px solid #D9D9D9;border-radius:6px;padding:9px 18px;cursor:pointer;}
+  .btn:hover{border-color:var(--accent);color:var(--accent-step);}
+
+  svg text{font-family:'Poppins',system-ui,sans-serif;}
+
+  @media (max-width: 760px){
+    .app{flex-direction:column;}
+    .rail{width:100%;display:flex;overflow-x:auto;padding:16px;}
+    .rail-title{display:none;}
+    .rail-item{border-left:none;border-bottom:3px solid transparent;white-space:nowrap;}
+    .rail-item.active{border-left:none;border-bottom-color:var(--accent);}
+    .main{padding:32px 20px;max-width:100%;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <nav class="rail">
+    <div class="rail-title">Strategy rollout</div>
+    <button class="rail-item active" data-panel="p1"><span class="num">01</span><span>Understanding &amp; endorsement</span></button>
+    <button class="rail-item" data-panel="p2"><span class="num">02</span><span>How opinions shifted</span></button>
+    <button class="rail-item" data-panel="p3"><span class="num">03</span><span>Drilling into the detail</span></button>
+  </nav>
+
+  <main class="main">
+
+    <!-- ============ PANEL 1 ============ -->
+    <section class="panel active" id="p1">
+      <h1>Understanding &amp; endorsement of the strategy</h1>
+      <p class="sub">Where colleagues sit against two dimensions: how well they understand the new strategy, and how much they endorse it. Square area reflects headcount within each quadrant.</p>
+
+      <div class="card">
+        <div class="group-cards" id="groupCards"></div>
+
+        <div class="card-flex">
+          <div class="chart-col">
+            <div class="quad-inner">
+              <div class="axis-label-v">Endorsement</div>
+              <div>
+                <svg id="quadSvg" width="400" height="400" viewBox="0 0 400 400"></svg>
+                <div class="axis-label-h">Understanding</div>
+              </div>
+            </div>
+          </div>
+          <div class="commentary-col">
+            <p class="commentary" id="quadCommentary"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PANEL 2 ============ -->
+    <section class="panel" id="p2">
+      <h1>How opinions on the strategy shifted</h1>
+      <p class="sub">5,000 individual responses to "I understand what the strategy means for my role", tracked from last year's survey to this year's.</p>
+
+      <div class="card">
+        <div class="legend-row">
+          <div class="legend-item"><span class="legend-swatch" style="background:var(--negative)"></span>Doesn't understand</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:var(--positive)"></span>Understands</div>
+        </div>
+
+        <div class="card-flex">
+          <div class="chart-col">
+            <svg id="swarmSvg" width="500" height="320" viewBox="0 0 500 320"></svg>
+            <div style="margin-top:12px;">
+              <button class="btn" id="replayButton">Replay</button>
+            </div>
+          </div>
+          <div class="commentary-col">
+            <p class="commentary" id="swarmCommentary"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PANEL 3 ============ -->
+    <section class="panel" id="p3">
+      <h1>Drilling into the detail</h1>
+      <p class="sub">Click a headline score to see how GPTW, Wellbeing and Strategy break down by country, business unit and level.</p>
+
+      <div class="card">
+        <div class="legend-row" id="bubbleLegend"></div>
+        <svg id="bubbleSvg" width="100%" height="480" viewBox="0 0 800 480" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   Navigation
+   ============================================================ */
+document.querySelectorAll('.rail-item').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.rail-item').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.panel).classList.add('active');
+    if (btn.dataset.panel === 'p2' && window.playSwarm) window.playSwarm();
+  });
+});
+
+/* ============================================================
+   Panel 1 — understanding & endorsement matrix
+   ============================================================ */
+(function(){
+  const datasets = [
+    [100, 400, 900, 1600], // Overall
+    [150, 300, 450, 600],  // Group 1
+    [200, 250, 400, 800],  // Group 2
+    [100, 500, 700, 1100], // Group 3
+    [80, 150, 1000, 2000]  // Group 4
+  ];
+  const groupNames = ["Overall", "Group 1", "Group 2", "Group 3", "Group 4"];
+  const quadLabels = ["Taking it on faith", "Bought in", "Not reached", "Understood, not sold"];
+  const quadColors = ['#11CEEE', '#CEEE11', '#6B7280', '#EE11CE'];
+  const commentary = [
+    "Just 13% of colleagues are fully bought in \u2014 they understand the strategy and endorse it. The largest group, 53%, understand what's being asked of them but haven't bought in: understanding isn't the barrier here, belief is.",
+    "Group 1 shows the smallest gap between understanding and endorsement of any group: only 40% understand the strategy without buying into it, while 20% are fully bought in \u2014 second only to Group 3.",
+    "Nearly half of Group 2 (48%) understand the strategy but remain unconvinced \u2014 the second largest understanding-to-endorsement gap among the four groups, behind Group 4.",
+    "Group 3 has the strongest conversion of any group: 21% are fully bought in, the highest of the five. Even so, 29% still haven't been reached by the messaging at all.",
+    "Group 4 is the outlier: 62% understand the strategy but haven't endorsed it, and only 5% are bought in \u2014 the largest understanding-to-endorsement gap of any group."
+  ];
+
+  const svg = d3.select('#quadSvg');
+  const cx = 200, cy = 200;
+  // Domain is a percentage (0-100), not a raw headcount, so square AREA is
+  // always proportional to the % shown in the label — independent of how
+  // large any one group's total happens to be.
+  const sizeScale = d3.scaleSqrt().domain([0, 100]).range([0, 130]);
+
+  const corners = [
+    {x: 16,  y: 24,  anchor: 'start', swatchDx: 0,   sqCorner: (p)=>({x:p.x, y:p.y})},
+    {x: 384, y: 24,  anchor: 'end',   swatchDx: -10, sqCorner: (p)=>({x:p.x+p.s, y:p.y})},
+    {x: 16,  y: 356, anchor: 'start', swatchDx: 0,   sqCorner: (p)=>({x:p.x, y:p.y+p.s})},
+    {x: 384, y: 356, anchor: 'end',   swatchDx: -10, sqCorner: (p)=>({x:p.x+p.s, y:p.y+p.s})}
+  ];
+
+  function render(dataIndex){
+    const data = datasets[dataIndex];
+    const total = data.reduce((a,b)=>a+b, 0);
+    const pcts = data.map(d => (d / total) * 100);
+    svg.selectAll('*').remove();
+
+    const positions = pcts.map((pct,i) => {
+      const s = sizeScale(pct);
+      switch(i){
+        case 0: return {x: cx - s, y: cy - s, s};
+        case 1: return {x: cx,     y: cy - s, s};
+        case 2: return {x: cx - s, y: cy,     s};
+        case 3: return {x: cx,     y: cy,     s};
+      }
+    });
+
+    svg.append('line').attr('x1',cx).attr('x2',cx).attr('y1',55).attr('y2',345).attr('stroke','#D9D9D9').attr('stroke-dasharray','2,2');
+    svg.append('line').attr('x1',55).attr('x2',345).attr('y1',cy).attr('y2',cy).attr('stroke','#D9D9D9').attr('stroke-dasharray','2,2');
+
+    corners.forEach((c,i)=>{
+      const target = c.sqCorner(positions[i]);
+      svg.append('line')
+        .attr('x1', c.x).attr('y1', c.y + 10)
+        .attr('x2', target.x).attr('y2', target.y)
+        .attr('stroke', '#D9D9D9').attr('stroke-dasharray','1,3').attr('opacity', 0.7);
+    });
+
+    data.forEach((d,i)=>{
+      const p = positions[i];
+      svg.append('rect')
+        .attr('x', p.x).attr('y', p.y)
+        .attr('width', p.s).attr('height', p.s)
+        .attr('fill', quadColors[i]).attr('opacity', 0.85);
+    });
+
+    corners.forEach((c,i)=>{
+      const pct = Math.round(pcts[i]);
+      svg.append('rect')
+        .attr('x', c.x + c.swatchDx).attr('y', c.y - 9)
+        .attr('width', 10).attr('height', 10)
+        .attr('fill', quadColors[i]);
+
+      const textX = c.anchor === 'start' ? c.x + 16 : c.x - 16;
+
+      svg.append('text')
+        .attr('x', textX).attr('y', c.y)
+        .attr('text-anchor', c.anchor)
+        .attr('font-size', '11px').attr('font-weight', '400').attr('fill', '#1A1D23')
+        .text(quadLabels[i]);
+
+      svg.append('text')
+        .attr('x', textX).attr('y', c.y + 17)
+        .attr('text-anchor', c.anchor)
+        .attr('font-size', '13px').attr('font-weight', '500').attr('fill', '#1A1D23')
+        .text(pct + '%');
+    });
+
+    document.getElementById('quadCommentary').textContent = commentary[dataIndex];
+  }
+
+  const cardRow = document.getElementById('groupCards');
+  groupNames.forEach((name, i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'group-card' + (i === 0 ? ' active' : '');
+    btn.type = 'button';
+    btn.setAttribute('role', 'radio');
+    btn.setAttribute('aria-checked', i === 0 ? 'true' : 'false');
+    btn.textContent = name;
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.group-card').forEach(c=>{
+        c.classList.remove('active');
+        c.setAttribute('aria-checked', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-checked', 'true');
+      render(i);
+    });
+    cardRow.appendChild(btn);
+  });
+
+  render(0);
+})();
+
+/* ============================================================
+   Panel 2 — how opinions shifted (dot swarm)
+   ============================================================ */
+(function(){
+  const svg = d3.select('#swarmSvg');
+  const NEGATIVE = '#EE11CE', POSITIVE = '#CEEE11';
+  const commentaryEl = document.getElementById('swarmCommentary');
+
+  const START_TEXT = "Last year, 5,000 colleagues told us they didn't understand what the strategy meant for their role.";
+  const END_TEXT = "This year, 60% say they understand it \u2014 a clear improvement, though four in ten are still unclear.";
+
+  let points = [];
+
+  function initSwarm(){
+    points = d3.range(5000).map(()=>({
+      x: 30 + Math.random() * 150,
+      y: 55 + Math.random() * 220
+    }));
+
+    svg.selectAll('circle').interrupt().remove();
+    svg.selectAll('text.year-label').remove();
+
+    svg.selectAll('circle')
+      .data(points)
+      .enter().append('circle')
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y)
+      .attr('r', 2)
+      .attr('fill', NEGATIVE)
+      .style('opacity', 0.55);
+
+    svg.append('text')
+      .attr('class', 'year-label last-year')
+      .attr('x', 105).attr('y', 30)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '13px').attr('font-weight', '500')
+      .attr('fill', '#1A1D23')
+      .text('Last year');
+
+    commentaryEl.textContent = START_TEXT;
+  }
+
+  function playSwarm(){
+    initSwarm();
+
+    const t = svg.selectAll('circle')
+      .transition()
+      .delay(500)
+      .duration(1800)
+      .attr('cx', () => 320 + Math.random() * 150)
+      .attr('cy', (d,i) => i < 3000
+        ? 55 + Math.random() * 140
+        : 210 + Math.random() * 90)
+      .attr('fill', (d,i) => i < 3000 ? POSITIVE : NEGATIVE);
+
+    svg.select('.last-year')
+      .transition().delay(500).duration(700)
+      .style('opacity', 0)
+      .remove();
+
+    t.end().then(()=>{
+      svg.append('text')
+        .attr('class', 'year-label this-year')
+        .attr('x', 395).attr('y', 30)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '13px').attr('font-weight', '500')
+        .attr('fill', '#1A1D23')
+        .style('opacity', 0)
+        .text('This year')
+        .transition().duration(400)
+        .style('opacity', 1);
+
+      commentaryEl.textContent = END_TEXT;
+    }).catch(()=>{ /* interrupted by replay — fine */ });
+  }
+
+  document.getElementById('replayButton').addEventListener('click', playSwarm);
+  window.playSwarm = playSwarm;
+  initSwarm();
+})();
+
+/* ============================================================
+   Panel 3 — drilling into the detail (bubble drilldown)
+   ============================================================ */
+(function(){
+  const overallData = {
+    question: ["GPTW", "Wellbeing", "Strategy"],
+    scores: [40, 70, 50]
+  };
+
+  const otherData = [
+    {name: "France", type: "Country", scores: [30, 60, 40]},
+    {name: "UK", type: "Country", scores: [45, 50, 35]},
+    {name: "Germany", type: "Country", scores: [20, 55, 50]},
+    {name: "HR", type: "Unit", scores: [25, 35, 45]},
+    {name: "Ops", type: "Unit", scores: [55, 65, 75]},
+    {name: "Finance", type: "Unit", scores: [35, 45, 55]},
+    {name: "Level 1", type: "Level", scores: [15, 25, 30]},
+    {name: "Level 2", type: "Level", scores: [50, 60, 70]},
+    {name: "Level 3", type: "Level", scores: [40, 50, 60]},
+    {name: "Level 4", type: "Level", scores: [30, 40, 50]}
+  ];
+
+  const typeLabels = ['Overall', 'Country', 'Unit', 'Level'];
+  const typeToYPos = {'Overall': 70, 'Country': 190, 'Unit': 300, 'Level': 410};
+  const labelYPositions = [70, 190, 300, 410];
+
+  const colorScale = d3.scaleOrdinal()
+    .domain(['Overall', 'Country', 'Unit', 'Level'])
+    .range(['#11CEEE', '#7B2FFF', '#FFCC00', '#FF8C69']);
+
+  const svg = d3.select('#bubbleSvg');
+  const xScale = d3.scaleLinear().domain([0, 100]).range([70, 760]);
+
+  const legend = d3.select('#bubbleLegend');
+  typeLabels.forEach(t=>{
+    const item = legend.append('div').attr('class','legend-item');
+    item.append('span').attr('class','legend-swatch').style('background', colorScale(t));
+    item.append('span').text(t);
+  });
+
+  svg.selectAll('.row-label')
+    .data(typeLabels)
+    .enter().append('text')
+    .attr('class', 'row-label')
+    .attr('x', 0).attr('y', (_,i)=>labelYPositions[i] - 26)
+    .attr('font-size', '11px').attr('font-weight', '500')
+    .attr('fill', '#6B7280')
+    .text(d=>d);
+
+  svg.selectAll('.row-line')
+    .data(labelYPositions.slice(1))
+    .enter().append('line')
+    .attr('class','row-line')
+    .attr('x1', 0).attr('x2', 800)
+    .attr('y1', d=>d-70).attr('y2', d=>d-70)
+    .style('stroke', '#D9D9D9').style('stroke-width', 1);
+
+  const xAxis = d3.axisBottom(xScale).ticks(5).tickSize(-330);
+  svg.append('g')
+    .attr('class','x-axis')
+    .attr('transform', 'translate(0,450)')
+    .call(xAxis)
+    .call(g => g.select('.domain').style('stroke', 'none'))
+    .call(g => g.selectAll('.tick line').style('stroke', '#E5E5E5').style('stroke-dasharray','2,2'))
+    .call(g => g.selectAll('.tick text').style('fill', '#6B7280').style('font-size','11px').style('font-weight','300').text(d=>d+'%'));
+
+  svg.selectAll('.overall-bubble')
+    .data(overallData.scores)
+    .enter().append('circle')
+    .attr('class','overall-bubble')
+    .attr('cx', d => xScale(d))
+    .attr('cy', typeToYPos.Overall)
+    .attr('r', 18)
+    .attr('fill', colorScale('Overall'))
+    .style('cursor', 'pointer')
+    .each(function(d, i){
+      d3.select(this).on('click', function(){
+        svg.selectAll('.overall-bubble').attr('fill', '#D9D9D9');
+        d3.select(this).attr('fill', colorScale('Overall'));
+        updateOtherData(i, xScale(d));
+      });
+    });
+
+  svg.selectAll('.overall-label')
+    .data(overallData.question)
+    .enter().append('text')
+    .attr('class','overall-label')
+    .attr('x', (d,i)=>xScale(overallData.scores[i]))
+    .attr('y', typeToYPos.Overall - 28)
+    .attr('text-anchor','middle')
+    .attr('font-size','11px').attr('font-weight','400').attr('fill','#1A1D23')
+    .style('pointer-events','none')
+    .text(d=>d);
+
+  svg.selectAll('.overall-score-label')
+    .data(overallData.scores)
+    .enter().append('text')
+    .attr('class','overall-score-label')
+    .attr('x', d=>xScale(d))
+    .attr('y', typeToYPos.Overall + 4)
+    .attr('text-anchor','middle')
+    .style('pointer-events','none')
+    .attr('font-size','10px').attr('font-weight','300').attr('fill','#FAFAFA')
+    .text(d=>d+'%');
+
+  svg.append('text')
+    .attr('x', 400).attr('y', 20)
+    .attr('text-anchor','middle')
+    .attr('font-size','12px').attr('font-weight','300').attr('fill','#6B7280')
+    .text('Click a score above to see the demographic split');
+
+  // Labels stay hidden and locked to their FINAL position throughout the
+  // bubble's flight, only fading in once the bubble has landed — this stops
+  // labels sweeping across other rows and cluttering the chart mid-animation.
+  function updateOtherData(index, startX){
+    const startY = typeToYPos.Overall;
+
+    const otherBubbles = svg.selectAll('.other-bubble').data(otherData, d=>d.name);
+    const bubbleMerged = otherBubbles.enter().append('circle')
+        .attr('class','other-bubble')
+        .attr('cx', startX).attr('cy', startY).attr('r', 0)
+        .attr('fill', d=>colorScale(d.type))
+      .merge(otherBubbles);
+
+    const bubbleTransition = bubbleMerged
+      .transition().duration(750).ease(d3.easeCubicOut)
+      .attr('r', 16)
+      .attr('cx', d=>xScale(d.scores[index]))
+      .attr('cy', d=>typeToYPos[d.type]);
+
+    const nameLabels = svg.selectAll('.other-label').data(otherData, d=>d.name);
+    const nameMerged = nameLabels.enter().append('text')
+        .attr('class','other-label')
+        .attr('text-anchor','middle')
+        .attr('font-size','10px').attr('font-weight','400').attr('fill','#1A1D23')
+        .style('opacity', 0)
+      .merge(nameLabels)
+        .attr('x', d=>xScale(d.scores[index]))
+        .attr('y', d=>typeToYPos[d.type] - 22)
+        .text(d=>d.name)
+        .style('opacity', 0);
+
+    const scoreLabels = svg.selectAll('.score-label').data(otherData, d=>d.name);
+    const scoreMerged = scoreLabels.enter().append('text')
+        .attr('class','score-label')
+        .attr('text-anchor','middle')
+        .attr('font-size','10px').attr('font-weight','300').attr('fill','#FAFAFA')
+        .style('opacity', 0)
+      .merge(scoreLabels)
+        .attr('x', d=>xScale(d.scores[index]))
+        .attr('y', d=>typeToYPos[d.type] + 4)
+        .text(d=>d.scores[index] + '%')
+        .style('opacity', 0);
+
+    bubbleTransition.end().then(()=>{
+      nameMerged.transition().duration(250).style('opacity', 1);
+      scoreMerged.transition().duration(250).style('opacity', 1);
+    }).catch(()=>{ /* interrupted by a fresh click — fine */ });
+  }
+})();
+</script>
+</body>
+</html>

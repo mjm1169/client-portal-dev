@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ippy · People Report 2026 · Prepared by Ipsos</title>
+<title>Ippy · Scrollytelling demo</title>
+<meta name="description" content="Scroll-driven narritve report with animation.">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
 @font-face{font-family:'Neue Machina';src:url('/fonts/NeueMachina-Regular.woff2') format('woff2');font-weight:400;font-display:swap;}
 @font-face{font-family:'Neue Machina';src:url('/fonts/NeueMachina-Medium.woff2') format('woff2');font-weight:500;font-display:swap;}
@@ -275,84 +277,122 @@ function tick(){
 
 (function culture(){
   const WORDS=[
-    {w:'Collaborative',now:79,future:64},{w:'Inclusive',now:89,future:73},
-    {w:'High-performing',now:81,future:84},{w:'Client-focused',now:65,future:98},
-    {w:'Accountable',now:64,future:85},{w:'Respectful',now:64,future:64},
-    {w:'Ambitious',now:78,future:96},{w:'Meritocratic',now:72,future:75},
-    {w:'Fast-paced',now:91,future:98},{w:'Resilient',now:96,future:84},
-    {w:'Decisive',now:98,future:64},{w:'Innovative',now:53,future:73},
-    {w:'Agile',now:13,future:65},{w:'Transparent',now:18,future:98},
-    {w:'Empowering',now:2,future:88},{w:'Psych. safe',now:40,future:73},
-    {w:'Diverse',now:31,future:64},{w:'Purpose-driven',now:2,future:72},
-    {w:'Curious',now:39,future:86},{w:'Caring',now:27,future:88},
-    {w:'Entrepreneurial',now:24,future:75},{w:'Data-driven',now:50,future:94},
-    {w:'Sustainable',now:14,future:84},{w:'Hierarchical',now:84,future:51},
-    {w:'Risk-averse',now:89,future:18},{w:'Bureaucratic',now:97,future:8},
-    {w:'Competitive',now:77,future:40},{w:'Process-heavy',now:69,future:28},
-    {w:'Siloed',now:4,future:38},{w:'Presenteeist',now:43,future:33},
+    {w:'Collaborative',now:74,future:62},{w:'Inclusive',now:83,future:71},
+    {w:'High-performing',now:77,future:80},{w:'Client-focused',now:63,future:90},
+    {w:'Accountable',now:61,future:79},{w:'Respectful',now:62,future:67},
+    {w:'Ambitious',now:71,future:89},{w:'Meritocratic',now:68,future:73},
+    {w:'Fast-paced',now:86,future:91},{w:'Resilient',now:90,future:79},
+    {w:'Decisive',now:92,future:61},{w:'Innovative',now:51,future:70},
+    {w:'Agile',now:22,future:63},{w:'Transparent',now:27,future:91},
+    {w:'Empowering',now:14,future:82},{w:'Psych. safe',now:41,future:71},
+    {w:'Diverse',now:34,future:62},{w:'Purpose-driven',now:16,future:68},
+    {w:'Curious',now:40,future:80},{w:'Caring',now:30,future:83},
+    {w:'Entrepreneurial',now:26,future:72},{w:'Data-driven',now:49,future:87},
+    {w:'Sustainable',now:19,future:78},{w:'Hierarchical',now:80,future:46},
+    {w:'Risk-averse',now:84,future:24},{w:'Bureaucratic',now:91,future:15},
+    {w:'Competitive',now:73,future:38},{w:'Process-heavy',now:66,future:31},
+    {w:'Siloed',now:12,future:35},{w:'Presenteeist',now:42,future:30},
   ];
   const MID=60,PAD={l:48,r:24,t:30,b:42},W=760,H=430;
   const PW=W-PAD.l-PAD.r,PH=H-PAD.t-PAD.b;
-  const toX=v=>PAD.l+(v/100)*PW,toY=v=>PAD.t+((100-v)/100)*PH;
-  const midX=toX(MID),midY=toY(MID),xR=PAD.l+PW,yB=PAD.t+PH;
-  function qCol(d){const hn=d.now>=MID,hf=d.future>=MID;if(hn&&hf)return '#c6e88c';if(!hn&&hf)return '#152022';if(hn&&!hf)return '#a8a594';return '#00ca87';}
-  const svg=document.getElementById('cultureSvg');if(!svg)return;
-  const maxNow=Math.max(...WORDS.map(d=>d.now)),maxFut=Math.max(...WORDS.map(d=>d.future));
-  let h='';
-  h+=`<rect x="${PAD.l}" y="${PAD.t}" width="${midX-PAD.l}" height="${midY-PAD.t}" fill="rgba(21,32,34,0.04)"/>`;
-  h+=`<rect x="${midX}" y="${PAD.t}" width="${xR-midX}" height="${midY-PAD.t}" fill="rgba(135,202,0,0.07)"/>`;
-  h+=`<rect x="${PAD.l}" y="${midY}" width="${midX-PAD.l}" height="${yB-midY}" fill="rgba(140,232,198,0.10)"/>`;
-  h+=`<rect x="${midX}" y="${midY}" width="${xR-midX}" height="${yB-midY}" fill="rgba(168,165,148,0.10)"/>`;
-  for(let v=20;v<=80;v+=20){h+=`<line x1="${toX(v)}" y1="${PAD.t}" x2="${toX(v)}" y2="${yB}" stroke="rgba(21,32,34,0.05)" stroke-width="1"/>`;h+=`<line x1="${PAD.l}" y1="${toY(v)}" x2="${xR}" y2="${toY(v)}" stroke="rgba(21,32,34,0.05)" stroke-width="1"/>`;}
-  h+=`<line x1="${midX}" y1="${PAD.t}" x2="${midX}" y2="${yB}" stroke="rgba(21,32,34,0.22)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
-  h+=`<line x1="${PAD.l}" y1="${midY}" x2="${xR}" y2="${midY}" stroke="rgba(21,32,34,0.22)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  const svgEl=document.getElementById('cultureSvg');if(!svgEl)return;
+  const svg=d3.select(svgEl);
+
+  // Domain is padded a few points beyond 0–100 so the highest/lowest scorers
+  // land just inside the frame instead of flush against the edge or the
+  // quadrant captions above them.
+  const x=d3.scaleLinear().domain([-8,108]).range([PAD.l,PAD.l+PW]);
+  const y=d3.scaleLinear().domain([-8,108]).range([PAD.t+PH,PAD.t]);
+  const midX=x(MID),midY=y(MID),xR=PAD.l+PW,yB=PAD.t+PH;
+
+  function qCol(d){const hn=d.now>=MID,hf=d.future>=MID;if(hn&&hf)return'#c6e88c';if(!hn&&hf)return'#152022';if(hn&&!hf)return'#a8a594';return'#00ca87';}
+
+  svg.append('rect').attr('x',PAD.l).attr('y',PAD.t).attr('width',midX-PAD.l).attr('height',midY-PAD.t).attr('fill','rgba(21,32,34,0.04)');
+  svg.append('rect').attr('x',midX).attr('y',PAD.t).attr('width',xR-midX).attr('height',midY-PAD.t).attr('fill','rgba(135,202,0,0.07)');
+  svg.append('rect').attr('x',PAD.l).attr('y',midY).attr('width',midX-PAD.l).attr('height',yB-midY).attr('fill','rgba(140,232,198,0.10)');
+  svg.append('rect').attr('x',midX).attr('y',midY).attr('width',xR-midX).attr('height',yB-midY).attr('fill','rgba(168,165,148,0.10)');
+
+  [20,40,60,80,100].forEach(v=>{
+    svg.append('line').attr('x1',x(v)).attr('y1',PAD.t).attr('x2',x(v)).attr('y2',yB).attr('stroke','rgba(21,32,34,0.05)');
+    svg.append('line').attr('x1',PAD.l).attr('y1',y(v)).attr('x2',xR).attr('y2',y(v)).attr('stroke','rgba(21,32,34,0.05)');
+  });
+  svg.append('line').attr('x1',midX).attr('y1',PAD.t).attr('x2',midX).attr('y2',yB).attr('stroke','rgba(21,32,34,0.22)').attr('stroke-width',1.5).attr('stroke-dasharray','5 4');
+  svg.append('line').attr('x1',PAD.l).attr('y1',midY).attr('x2',xR).attr('y2',midY).attr('stroke','rgba(21,32,34,0.22)').attr('stroke-width',1.5).attr('stroke-dasharray','5 4');
+
+  // Top captions sit in the margin above the plotted area (not inside it) so
+  // they never compete with the densely-populated top quadrants for space.
+  // The bottom quadrants are sparse enough that the original in-plot
+  // placement still has clearance.
   const lx=(midX+xR)/2,rx=(PAD.l+midX)/2;
-  [{x:lx,y:PAD.t+14,t:'STRENGTHS TO BUILD ON'},{x:rx,y:PAD.t+14,t:'ASPIRATIONS TO CULTIVATE'},{x:lx,y:yB-8,t:'PRESENT BUT UNWANTED'},{x:rx,y:yB-8,t:'LOW PRIORITY'}].forEach(q=>h+=`<text x="${q.x}" y="${q.y}" text-anchor="middle" font-family="Space Grotesk" font-size="10" font-weight="500" letter-spacing="0.6" fill="rgba(21,32,34,0.28)">${q.t}</text>`);
-  h+=`<text x="${PAD.l+PW/2}" y="${H-6}" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="500" fill="rgba(21,32,34,0.5)">Current association score &#x2192;</text>`;
-  h+=`<text x="13" y="${PAD.t+PH/2}" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="500" fill="rgba(21,32,34,0.5)" transform="rotate(-90,13,${PAD.t+PH/2})">Future desire score &#x2192;</text>`;
-  [20,40,60,80,100].forEach(v=>{h+=`<text x="${toX(v)}" y="${yB+15}" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="rgba(21,32,34,0.4)">${v}</text>`;h+=`<text x="${PAD.l-6}" y="${toY(v)+4}" text-anchor="end" font-family="Space Grotesk" font-size="10" fill="rgba(21,32,34,0.4)">${v}</text>`;});
-  const labelData=WORDS.map((d,i)=>{
-    const px=toX(d.now),py=toY(d.future);
-    const w=d.w.length*5.6+4;
-    const flip=(px+9+w)>(xR-4);
-    const lx=flip?(px-9-w):(px+9);
-    return {i,d,px,py,x:lx,y:py+3.5,w,hh:9.5,flip};
+  const caps=[
+    {x:lx,y:14,t:'STRENGTHS TO BUILD ON'},
+    {x:rx,y:14,t:'ASPIRATIONS TO CULTIVATE'},
+    {x:lx,y:yB-8,t:'PRESENT BUT UNWANTED'},
+    {x:rx,y:yB-8,t:'LOW PRIORITY'},
+  ];
+  svg.selectAll('.quad-cap').data(caps).enter().append('text')
+    .attr('x',d=>d.x).attr('y',d=>d.y).attr('text-anchor','middle')
+    .attr('font-family','Space Grotesk').attr('font-size',10).attr('font-weight',500)
+    .attr('letter-spacing','0.6').attr('fill','rgba(21,32,34,0.28)')
+    .text(d=>d.t);
+
+  svg.append('text').attr('x',PAD.l+PW/2).attr('y',H-6).attr('text-anchor','middle').attr('font-family','Space Grotesk').attr('font-size',12).attr('font-weight',500).attr('fill','rgba(21,32,34,0.5)').text('Current association score →');
+  svg.append('text').attr('x',13).attr('y',PAD.t+PH/2).attr('text-anchor','middle').attr('font-family','Space Grotesk').attr('font-size',12).attr('font-weight',500).attr('fill','rgba(21,32,34,0.5)').attr('transform',`rotate(-90,13,${PAD.t+PH/2})`).text('Future desire score →');
+  [20,40,60,80,100].forEach(v=>{
+    svg.append('text').attr('x',x(v)).attr('y',yB+15).attr('text-anchor','middle').attr('font-family','Space Grotesk').attr('font-size',10).attr('fill','rgba(21,32,34,0.4)').text(v);
+    svg.append('text').attr('x',PAD.l-6).attr('y',y(v)+4).attr('text-anchor','end').attr('font-family','Space Grotesk').attr('font-size',10).attr('fill','rgba(21,32,34,0.4)').text(v);
   });
-  for(let iter=0;iter<300;iter++){
-    let moved=false;
-    for(let a=0;a<labelData.length;a++){
-      for(let b=a+1;b<labelData.length;b++){
-        const A=labelData[a],B=labelData[b];
-        const ax0=A.x,ax1=A.x+A.w,ay0=A.y-A.hh,ay1=A.y+3;
-        const bx0=B.x,bx1=B.x+B.w,by0=B.y-B.hh,by1=B.y+3;
-        const ox=Math.min(ax1,bx1)-Math.max(ax0,bx0);
-        const oy=Math.min(ay1,by1)-Math.max(ay0,by0);
-        if(ox>0&&oy>0){
-          const push=oy/2+0.7;
-          if(A.y<=B.y){A.y-=push;B.y+=push;}else{A.y+=push;B.y-=push;}
-          moved=true;
-        }
-      }
-    }
-    labelData.forEach(L=>{ L.y=Math.max(PAD.t+9,Math.min(yB-2,L.y)); });
-    if(!moved)break;
-  }
-  labelData.forEach(L=>{
-    const d=L.d,i=L.i,col=qCol(d);
-    h+=`<circle class="cdp" data-i="${i}" cx="${L.px.toFixed(1)}" cy="${L.py.toFixed(1)}" r="6" fill="${col}" stroke="#fff" stroke-width="1.5" style="cursor:pointer;"/>`;
-    if(Math.abs(L.y-(L.py+3.5))>3){
-      const lx0=L.flip?(L.px-9):(L.px+9);
-      const lx1=L.flip?(L.x+L.w+1):(L.x-1);
-      h+=`<line x1="${lx0.toFixed(1)}" y1="${L.py.toFixed(1)}" x2="${lx1.toFixed(1)}" y2="${(L.y-3).toFixed(1)}" stroke="rgba(21,32,34,0.22)" stroke-width="1"/>`;
-    }
-    h+=`<text class="cdp-lbl" data-i="${i}" x="${L.x.toFixed(1)}" y="${L.y.toFixed(1)}" text-anchor="${L.flip?'end':'start'}" font-family="Space Grotesk" font-size="9.5" font-weight="500" fill="#152022" style="pointer-events:none;user-select:none;">${d.w}</text>`;
+
+  // Label placement: a short-lived force simulation nudges each label away
+  // from its neighbours (forceCollide) while a strong forceX/forceY keeps it
+  // anchored near its own point. Run synchronously (no animation needed) and
+  // clamp the result inside the frame.
+  const maxNow=d3.max(WORDS,d=>d.now),maxFut=d3.max(WORDS,d=>d.future);
+  // n.x/n.y track the CENTER of the label's bounding box (so the circular
+  // collide force approximates its footprint correctly); the text itself is
+  // rendered left-anchored from n.x - labelW/2 so it never swings back over
+  // the dot the way a middle-anchored label with a small offset would.
+  const nodes=WORDS.map(d=>{
+    const px=x(d.now),py=y(d.future);
+    const labelW=d.w.length*5.7+6;
+    const restX=px+9+labelW/2,restY=py;
+    return {d,px,py,restX,restY,x:restX,y:restY,labelW};
   });
-  svg.innerHTML=h;
+  const sim=d3.forceSimulation(nodes)
+    .force('x',d3.forceX(n=>n.restX).strength(0.4))
+    .force('y',d3.forceY(n=>n.restY).strength(0.9))
+    .force('collide',d3.forceCollide(n=>Math.max(n.labelW/2,10)).iterations(4))
+    .stop();
+  for(let i=0;i<250;i++) sim.tick();
+  nodes.forEach(n=>{
+    n.x=Math.max(PAD.l+n.labelW/2+2,Math.min(xR-n.labelW/2-2,n.x));
+    n.y=Math.max(PAD.t+10,Math.min(yB-4,n.y));
+  });
+
+  svg.selectAll('.cdp-leader').data(nodes.filter(n=>Math.hypot(n.x-n.restX,n.y-n.restY)>4)).enter()
+    .append('line')
+    .attr('x1',n=>n.px+7).attr('y1',n=>n.py)
+    .attr('x2',n=>n.x-n.labelW/2-1).attr('y2',n=>n.y-3)
+    .attr('stroke','rgba(21,32,34,0.22)').attr('stroke-width',1);
+
+  const dotSel=svg.selectAll('.cdp').data(nodes).enter().append('circle')
+    .attr('class','cdp')
+    .attr('cx',n=>n.px).attr('cy',n=>n.py).attr('r',6)
+    .attr('fill',n=>qCol(n.d)).attr('stroke','#fff').attr('stroke-width',1.5)
+    .style('cursor','pointer');
+
+  const lblSel=svg.selectAll('.cdp-lbl').data(nodes).enter().append('text')
+    .attr('class','cdp-lbl')
+    .attr('x',n=>n.x-n.labelW/2).attr('y',n=>n.y+3.5).attr('text-anchor','start')
+    .attr('font-family','Space Grotesk').attr('font-size',9.5).attr('font-weight',500)
+    .attr('fill','#152022').style('pointer-events','none').style('user-select','none')
+    .text(n=>n.d.w);
+
   const wrap=document.getElementById('cultureWrap'),tip=document.getElementById('cultureTip');
-  function showTip(d,el){
-    const sr=svg.getBoundingClientRect(),wr=wrap.getBoundingClientRect();
-    const cx=parseFloat(el.getAttribute('cx')),cy=parseFloat(el.getAttribute('cy'));
-    const px=(cx/W)*sr.width+(sr.left-wr.left),py=(cy/H)*sr.height+(sr.top-wr.top);
+  function showTip(n){
+    const d=n.d;
+    const sr=svgEl.getBoundingClientRect(),wr=wrap.getBoundingClientRect();
+    const px=(n.px/W)*sr.width+(sr.left-wr.left),py=(n.py/H)*sr.height+(sr.top-wr.top);
     const pn=d.now===maxNow?'<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.15);font-size:11px;color:#c6e88c;font-weight:500;">&#9733; Highest current score</div>':'';
     const pf=d.future===maxFut?'<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.15);font-size:11px;color:#c6e88c;font-weight:500;">&#9733; Highest future desire</div>':'';
     const gap=d.future-d.now;
@@ -365,12 +405,17 @@ function tick(){
     tip.style.left=left+'px';tip.style.top=top+'px';
   }
   function hideTip(){tip.style.opacity='0';}
-  svg.querySelectorAll('.cdp').forEach(el=>{
-    const d=WORDS[+el.dataset.i],lbl=svg.querySelector(`.cdp-lbl[data-i="${el.dataset.i}"]`);
-    el.addEventListener('mouseenter',()=>{el.setAttribute('r','8');if(lbl)lbl.setAttribute('font-weight','800');showTip(d,el);});
-    el.addEventListener('mouseleave',()=>{el.setAttribute('r','6');if(lbl)lbl.setAttribute('font-weight','500');hideTip();});
-    el.addEventListener('mousemove',()=>showTip(d,el));
-  });
+  dotSel.on('mouseenter',function(event,n){
+      d3.select(this).attr('r',8);
+      lblSel.filter(m=>m===n).attr('font-weight',800);
+      showTip(n);
+    })
+    .on('mouseleave',function(event,n){
+      d3.select(this).attr('r',6);
+      lblSel.filter(m=>m===n).attr('font-weight',500);
+      hideTip();
+    })
+    .on('mousemove',function(event,n){ showTip(n); });
 })();
 
 requestAnimationFrame(tick);
