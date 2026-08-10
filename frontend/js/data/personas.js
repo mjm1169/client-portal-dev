@@ -44,6 +44,12 @@ export const PERSONAS = [
     },
     quote: "If it's important, put it in writing and send it to my inbox — I'll read it properly and keep it for reference.",
     summary: "Margaret has been with the business for 11 years and trusts the written record. She reads thoroughly and wants a paper trail, but can miss anything that's only announced verbally or socially.",
+    verbatims: [
+      "I'd just like a single weekly email that has everything in it, rather than bits and pieces all week.",
+      "Whoever writes the CEO's emails does a good job — clear, to the point. More of that please.",
+      "I don't use Teams chat for anything important, I don't trust I'll see it in time.",
+      "Stop putting big announcements out on a Friday afternoon, nobody reads them properly.",
+    ],
     audit: {
       engagementScore: 74,
       enps: 18,
@@ -78,6 +84,12 @@ export const PERSONAS = [
     },
     quote: "I don't really trust an email until my manager's told me the same thing in person.",
     summary: "Daniel supervises a site team and relies on his line manager as the credible source. Formal channels feel remote to him; a short team briefing lands far better than a broadcast email.",
+    verbatims: [
+      "My manager is honestly the only person I properly trust to tell me what's actually going on.",
+      "By the time head office news reaches us on site it's old news anyway.",
+      "A five minute huddle beats a two page email every time for my team.",
+      "Would be good if senior leaders actually visited more than once a year.",
+    ],
     audit: {
       engagementScore: 68,
       enps: 5,
@@ -112,6 +124,12 @@ export const PERSONAS = [
     },
     quote: "Yammer's basically where the real conversation happens, not the all-staff email.",
     summary: "Two years into her graduate scheme, Priya is digitally fluent and expects two-way, informal, always-on communication. She engages well but can feel unheard by top-down, one-way channels.",
+    verbatims: [
+      "Yammer is honestly more useful than half our 'official' channels.",
+      "I want to be able to reply and ask questions, not just read a wall of text.",
+      "Some of the corporate updates feel like they're written for a different generation, no offence.",
+      "More behind-the-scenes content please, not just polished announcements.",
+    ],
     audit: {
       engagementScore: 79,
       enps: 32,
@@ -146,6 +164,12 @@ export const PERSONAS = [
     },
     quote: "I'll take the update wherever it lands first — I'm checking three of these anyway.",
     summary: "Tom is busy and channel-agnostic, already juggling several tools day to day. He's easy to reach but quick to tune out anything that feels duplicated across channels.",
+    verbatims: [
+      "Honestly whichever channel gets to me first is the one that wins, I'm not precious about it.",
+      "Please stop sending the same email through three different systems, my inbox is chaos.",
+      "A single source-of-truth intranet page would save everyone a lot of hassle.",
+      "I mute most all-staff channels, so make the subject line count.",
+    ],
     audit: {
       engagementScore: 81,
       enps: 28,
@@ -180,6 +204,12 @@ export const PERSONAS = [
     },
     quote: "Honestly, most of it washes over me — I'll hear about anything important eventually.",
     summary: "Chloe represents a flight-risk segment with low engagement across every channel, not just a channel-preference issue. Reaching her needs a trust and relevance fix as much as a delivery-method fix.",
+    verbatims: [
+      "I don't really feel like any of it is aimed at people like me.",
+      "Most weeks I couldn't tell you what's actually going on with the company.",
+      "It's not that there's too little communication, it just doesn't feel relevant.",
+      "I'd probably pay more attention if someone actually asked what I thought, rather than just told me stuff.",
+    ],
     audit: {
       engagementScore: 41,
       enps: -22,
@@ -214,6 +244,12 @@ export const PERSONAS = [
     },
     quote: "A two-minute video from the CEO tells me more than a page of text ever will.",
     summary: "Marcus has limited or no regular email/desk access and absorbs visual and spoken content far better than dense text. Noticeboards and short videos at shift changeovers work best for him.",
+    verbatims: [
+      "I don't have a work email so anything that assumes I do just misses me completely.",
+      "Short videos on the break room screen actually get watched, unlike the posters.",
+      "Give me two minutes of video over two pages of text any day.",
+      "Sometimes the only place I hear big news is from a mate on another shift.",
+    ],
     audit: {
       engagementScore: 70,
       enps: 12,
@@ -280,6 +316,9 @@ export function buildPersonaSystemPrompt(persona) {
     `- What works well for them: ${a.whatWorksWell}`,
     `- Their top frustration: ${a.topFrustration}`,
     ``,
-    `Answer questions the way this person would, drawing on the data above. Keep replies short and conversational (2-5 sentences) unless asked for more detail. Never break character or mention that you are an AI, a language model, or that this is simulated/dummy data — just answer as this employee.`,
+    `Things ${persona.name} has actually said before, in their own words, on an open-text comms survey question ("Any other comments about internal communications?"):`,
+    ...persona.verbatims.map(v => `- "${v}"`),
+    ``,
+    `Answer questions the way this person would, drawing on the data and verbatims above. Where a verbatim is relevant to what's being asked, feel free to echo or paraphrase it naturally — that's genuinely something you've said before — but don't contradict it, and don't recite the whole list at once. Keep replies short and conversational (2-5 sentences) unless asked for more detail. Never break character or mention that you are an AI, a language model, or that this is simulated/dummy data — just answer as this employee.`,
   ].join("\n");
 }

@@ -6,6 +6,13 @@ import {
   topChannels,
   buildPersonaSystemPrompt,
 } from "../data/personas.js";
+import { GROUP_CHAT_SCRIPT } from "../data/groupChatScript.js";
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
 
 // --- BYOK (bring-your-own-key) chat settings -------------------------------
 // The API key never touches our server or git: it's typed into the browser
@@ -63,7 +70,201 @@ async function sendToGemini(persona, apiKey, model, history) {
   return text;
 }
 
+// --- Entry point: landing choice -------------------------------------------
+
 export function mountSegmentation(container) {
+  renderLanding(container);
+}
+
+function renderLanding(container) {
+  container.innerHTML = `
+    <div class="segmentation-page segmentation-landing">
+      <div class="segmentation-header">
+        <button type="button" class="report-back-link" id="segBack">‹ Home</button>
+        <h1>Segmentation Explorer</h1>
+        <p class="segmentation-sub">
+          Six comms personas, clustered from a "which channels do you prefer?" multi-select
+          question and rounded out with standard engagement &amp; comms-audit responses.
+        </p>
+      </div>
+
+      <div class="landing-choices">
+        <button type="button" class="landing-choice-card" data-choice="meet">
+          <h2>Meet the segments</h2>
+          <p>Watch the six personas join a simulated team call, one by one — largest segment
+             first — talking in their own words.</p>
+          <span class="landing-choice-cta">Start the call →</span>
+        </button>
+        <button type="button" class="landing-choice-card" data-choice="explore">
+          <h2>Explore the data</h2>
+          <p>Jump straight to the persona grid, detail profiles, side-by-side comparisons,
+             and 1:1 chat.</p>
+          <span class="landing-choice-cta">View the data →</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  container.querySelector("#segBack").addEventListener("click", () => {
+    window.location.hash = "/";
+  });
+  container.querySelector('[data-choice="explore"]').addEventListener("click", () => {
+    mountExplorer(container);
+  });
+  container.querySelector('[data-choice="meet"]').addEventListener("click", () => {
+    mountMeetSegments(container);
+  });
+}
+
+// --- "Meet the segments": scripted group-chat cold open ---------------------
+
+function mountMeetSegments(container) {
+  container.innerHTML = `
+    <div class="group-chat-section">
+      <div class="group-chat-header">
+        <div>
+          <button type="button" class="report-back-link" id="meetSegBack">‹ Home</button>
+          <h1>Meet the segments</h1>
+          <p class="segmentation-sub">
+            The six personas, dropping into a call one by one — largest segment first.
+          </p>
+        </div>
+        <div class="group-chat-actions">
+          <label class="group-chat-voice-toggle" id="voiceToggleWrap" style="display:none;">
+            <input type="checkbox" id="voiceToggle"> 🔊 Read aloud
+          </label>
+          <button type="button" class="btn-secondary" id="skipToData">Skip to the data →</button>
+        </div>
+      </div>
+
+      <div class="group-chat-participants" id="groupChatParticipants"></div>
+      <div class="group-chat-messages" id="groupChatMessages"></div>
+    </div>
+
+    <div id="explorerMount"></div>
+  `;
+
+  container.querySelector("#meetSegBack").addEventListener("click", () => {
+    window.speechSynthesis?.cancel();
+    window.location.hash = "/";
+  });
+
+  const explorerMount = container.querySelector("#explorerMount");
+  mountExplorer(explorerMount); // renders straight away; sequence above just delays scrolling to it
+
+  const participantsEl = container.querySelector("#groupChatParticipants");
+  const messagesEl = container.querySelector("#groupChatMessages");
+  const skipBtn = container.querySelector("#skipToData");
+  const voiceToggleWrap = container.querySelector("#voiceToggleWrap");
+  const voiceToggle = container.querySelector("#voiceToggle");
+
+  // Speech synthesis is a real, no-key-needed browser API — offer it, but
+  // only if it's actually present (and don't assume any voices are loaded).
+  if (window.speechSynthesis) voiceToggleWrap.style.display = "inline-flex";
+
+  let cancelled = false;
+  const joined = new Set();
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function scrollToExplorer() {
+    explorerMount.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  skipBtn.addEventListener("click", () => {
+    cancelled = true;
+    window.speechSynthesis?.cancel();
+    scrollToExplorer();
+  });
+
+  function speak(persona, text) {
+    return new Promise(resolve => {
+      if (!voiceToggle.checked || !window.speechSynthesis) { resolve(); return; }
+      const utter = new SpeechSynthesisUtterance(text);
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length) utter.voice = voices[(persona.number - 1) % voices.length];
+      // Nudge pitch per persona so even a reused voice sounds a little
+      // distinct from the last one — a cheap stand-in for six real voices.
+      utter.pitch = 0.85 + ((persona.number % 3) * 0.12);
+
+      // speechSynthesis has a long history of just never firing 'end' in some
+      // browsers/states (backgrounded tab, no voices installed, etc.) — a
+      // hard timeout means a flaky voice engine delays the sequence instead
+      // of freezing it outright.
+      let settled = false;
+      const settle = () => { if (!settled) { settled = true; resolve(); } };
+      const fallbackTimer = setTimeout(settle, 12000);
+      utter.onend = () => { clearTimeout(fallbackTimer); settle(); };
+      utter.onerror = () => { clearTimeout(fallbackTimer); settle(); };
+      window.speechSynthesis.speak(utter);
+    });
+  }
+
+  function addParticipant(persona) {
+    if (joined.has(persona.id)) return;
+    joined.add(persona.id);
+    participantsEl.insertAdjacentHTML("beforeend", `
+      <div class="group-chat-participant">
+        <div class="persona-avatar" style="background:${persona.accent}; color:${persona.avatarText}">${persona.number}</div>
+        <span>${persona.name}</span>
+      </div>
+    `);
+    messagesEl.insertAdjacentHTML("beforeend", `<div class="group-chat-system-note">${persona.name} joined the call</div>`);
+  }
+
+  async function addMessage(persona, text) {
+    const typingId = `group-chat-typing-${Date.now()}-${persona.number}`;
+    messagesEl.insertAdjacentHTML("beforeend", `
+      <div class="group-chat-msg group-chat-msg--typing" id="${typingId}">
+        <div class="persona-avatar" style="background:${persona.accent}; color:${persona.avatarText}">${persona.number}</div>
+        <div class="group-chat-msg__bubble" style="--persona-accent:${persona.accent}"><em>${persona.name} is typing…</em></div>
+      </div>
+    `);
+    await sleep(700 + Math.random() * 500);
+    if (cancelled) return;
+
+    document.getElementById(typingId)?.remove();
+    messagesEl.insertAdjacentHTML("beforeend", `
+      <div class="group-chat-msg">
+        <div class="persona-avatar" style="background:${persona.accent}; color:${persona.avatarText}">${persona.number}</div>
+        <div class="group-chat-msg__bubble" style="--persona-accent:${persona.accent}">
+          <span class="group-chat-msg__name">${persona.name}</span>
+          ${escapeHtml(text)}
+        </div>
+      </div>
+    `);
+    await speak(persona, text);
+  }
+
+  async function playScript() {
+    for (const event of GROUP_CHAT_SCRIPT) {
+      if (cancelled) return;
+      const persona = getPersona(event.personaId);
+      if (!persona) continue;
+
+      if (event.type === "join") {
+        addParticipant(persona);
+        await sleep(500);
+      } else {
+        await addMessage(persona, event.text);
+        await sleep(350);
+      }
+    }
+    if (!cancelled) {
+      await sleep(600);
+      scrollToExplorer();
+    }
+  }
+
+  playScript();
+}
+
+// --- "Explore the data": overview grid, detail profiles, compare, and the
+// 1:1 chat modal. Called into whatever root element the current entry point
+// wants it rendered into (the page directly, or beneath the group chat).
+function mountExplorer(container) {
   const state = { compareIds: new Set(), view: { type: "grid" } };
   const chatHistories = {}; // personaId -> [{role:'user'|'model', text}]
   let activeChatPersonaId = null;
@@ -445,12 +646,6 @@ export function mountSegmentation(container) {
       <div class="chat-msg ${m.role === "user" ? "chat-msg--user" : "chat-msg--persona"}">${escapeHtml(m.text)}</div>
     `).join("") || placeholder;
     chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-
-  function escapeHtml(str) {
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
   }
 
   function openChat(id) {
