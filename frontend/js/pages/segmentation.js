@@ -214,15 +214,41 @@ function mountMeetSegments(container) {
     messagesEl.insertAdjacentHTML("beforeend", `<div class="group-chat-system-note">${persona.name} joined the call</div>`);
   }
 
+  function wordCount(text) {
+    return text.trim().split(/\s+/).length;
+  }
+
+  function clamp(value, lo, hi) {
+    return Math.min(hi, Math.max(lo, value));
+  }
+
+  // How long the "…" bubble sits there before the message lands — modelling
+  // typing time, not reading time.
+  function typingDelay(text) {
+    return clamp(500 + wordCount(text) * 90, 900, 2200);
+  }
+
+  // How long the message then sits on screen, alone, before the next thing
+  // happens — modelling reading it at roughly a read-aloud pace (~150 words
+  // a minute, i.e. ~400ms/word) rather than a skim. This is the pause that
+  // was missing before: text was landing and immediately getting buried by
+  // the next "typing…" bubble.
+  function readingDelay(text) {
+    return clamp(wordCount(text) * 380 + 500, 1400, 6500);
+  }
+
   async function addMessage(persona, text) {
     const typingId = `group-chat-typing-${Date.now()}-${persona.number}`;
     messagesEl.insertAdjacentHTML("beforeend", `
       <div class="group-chat-msg group-chat-msg--typing" id="${typingId}">
         <div class="persona-avatar" style="background:${persona.accent}; color:${persona.avatarText}">${persona.number}</div>
-        <div class="group-chat-msg__bubble" style="--persona-accent:${persona.accent}"><em>${persona.name} is typing…</em></div>
+        <div class="group-chat-msg__bubble" style="--persona-accent:${persona.accent}">
+          <span class="group-chat-msg__name">${persona.name}</span>
+          <span class="typing-dots"><span></span><span></span><span></span></span>
+        </div>
       </div>
     `);
-    await sleep(700 + Math.random() * 500);
+    await sleep(typingDelay(text));
     if (cancelled) return;
 
     document.getElementById(typingId)?.remove();
@@ -235,7 +261,14 @@ function mountMeetSegments(container) {
         </div>
       </div>
     `);
-    await speak(persona, text);
+
+    if (voiceToggle.checked) {
+      // The audio itself paces this — just a small breather once it ends.
+      await speak(persona, text);
+      await sleep(500);
+    } else {
+      await sleep(readingDelay(text));
+    }
   }
 
   async function playScript() {
@@ -246,10 +279,9 @@ function mountMeetSegments(container) {
 
       if (event.type === "join") {
         addParticipant(persona);
-        await sleep(500);
+        await sleep(700);
       } else {
         await addMessage(persona, event.text);
-        await sleep(350);
       }
     }
     if (!cancelled) {
