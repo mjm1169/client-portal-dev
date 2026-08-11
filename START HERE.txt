@@ -20,14 +20,13 @@ If 401
 http://localhost:4280/.auth/login/aad
 
 Add to SQL DB
-INSERT INTO UserDatasetAccess (email, datasetFile)
-VALUES ('colleague@yourcompany.com', 'data1.csv');
-
+-- UserDatasetAccess is deprecated — ProductAccess replaced it (see api/sql/002_product_access.sql).
 INSERT INTO ProductAccess (email, product, client, blob_name, attribute1, granted_by) VALUES
     ('matty.mason@ipsos.com', 'radial', 'project1', 'data.csv', '/NHS', 'matty.mason@ipsos.com'),
-    ('matty.mason@ipsos.com', 'radial', 'project2', 'data.csv', '/Zippy', 'matty.mason@ipsos.com');
+    ('matty.mason@ipsos.com', 'radial', 'project2', 'data.csv', '/Zippy', 'matty.mason@ipsos.com'),
     ('matty.mason@ipsos.com', 'scrollytelling',     'Ippy', 'ippy_scrollytelling_report.html', 'matty.mason@ipsos.com'),
-    ('matty.mason@ipsos.com', 'industry-analytics', 'General', 'report_R1001.pdf',               'matty.mason@ipsos.com');
+    ('matty.mason@ipsos.com', 'industry-analytics', 'General', 'report_R1001.pdf',               'matty.mason@ipsos.com'),
+    ('matty.mason@ipsos.com', 'segmentation',       'all',   'segmentation',                     'matty.mason@ipsos.com');
 
 CREATE TABLE ProductAccess (
     email       NVARCHAR(255)  NOT NULL,

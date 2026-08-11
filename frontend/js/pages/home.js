@@ -1,11 +1,17 @@
 const UNLOCK_KEY = "unlocked:industryAnalytics";
+const EXEC_UNLOCK_KEY = "unlocked:execDashboard";
 
 function isIndustryAnalyticsUnlocked() {
   return localStorage.getItem(UNLOCK_KEY) === "true";
 }
 
+function isExecDashboardUnlocked() {
+  return localStorage.getItem(EXEC_UNLOCK_KEY) === "true";
+}
+
 export function mountHome(container, user) {
   const unlocked = isIndustryAnalyticsUnlocked();
+  const execUnlocked = isExecDashboardUnlocked();
 
   container.innerHTML = `
     <div class="home">
@@ -103,6 +109,29 @@ export function mountHome(container, user) {
 
       </div>
 
+      <div class="feature-card${execUnlocked ? '' : ' feature-card--locked'}" id="goExecDashboard">
+
+        <div class="feature-card__image feature-card__image--placeholder" aria-hidden="true">
+          <span class="feature-card__placeholder-emoji">📈</span>
+          <div class="feature-card__lock-overlay" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36">
+              <rect x="5" y="11" width="14" height="9" rx="1.5"/>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="feature-card__content">
+          <h2>Executive Dashboard</h2>
+          <p>
+            A high-level view built for leadership, surfacing the metrics
+            that matter most at a glance.
+          </p>
+
+        </div>
+
+      </div>
+
     </div>
 
     <div class="upload-modal-backdrop" id="accessModalBackdrop" role="dialog"
@@ -113,6 +142,18 @@ export function mountHome(container, user) {
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="accessModalNo">No</button>
           <button type="button" class="btn-primary" id="accessModalYes">Yes</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="upload-modal-backdrop" id="execModalBackdrop" role="dialog"
+         aria-modal="true" aria-labelledby="execModalTitle" style="display:none;">
+      <div class="upload-modal">
+        <h2 id="execModalTitle">Access required</h2>
+        <p>You don't have access to this section. Please pay £££ to Matty to unlock it.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="execModalNo">No way</button>
+          <button type="button" class="btn-primary" id="execModalYes">Fine</button>
         </div>
       </div>
     </div>
@@ -169,5 +210,45 @@ export function mountHome(container, user) {
     localStorage.setItem(UNLOCK_KEY, 'true');
     industryCard.classList.remove('feature-card--locked');
     closeAccessModal();
+  });
+
+  // Executive Dashboard — fake locked section, gated behind a joke "payment" prompt
+  const execCard     = container.querySelector('#goExecDashboard');
+  const execBackdrop = container.querySelector('#execModalBackdrop');
+  const execYes      = container.querySelector('#execModalYes');
+  const execNo       = container.querySelector('#execModalNo');
+
+  function onExecEscKey(e) {
+    if (e.key === 'Escape') closeExecModal();
+  }
+
+  function openExecModal() {
+    execBackdrop.style.display = 'flex';
+    document.addEventListener('keydown', onExecEscKey);
+  }
+
+  function closeExecModal() {
+    execBackdrop.style.display = 'none';
+    document.removeEventListener('keydown', onExecEscKey);
+  }
+
+  execCard.addEventListener('click', () => {
+    if (isExecDashboardUnlocked()) {
+      window.location.hash = "/supercool";
+    } else {
+      openExecModal();
+    }
+  });
+
+  execNo.addEventListener('click', closeExecModal);
+  execBackdrop.addEventListener('click', e => {
+    if (e.target === execBackdrop) closeExecModal();
+  });
+
+  execYes.addEventListener('click', () => {
+    localStorage.setItem(EXEC_UNLOCK_KEY, 'true');
+    execCard.classList.remove('feature-card--locked');
+    closeExecModal();
+    window.location.hash = "/supercool";
   });
 }

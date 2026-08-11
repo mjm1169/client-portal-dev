@@ -6,6 +6,7 @@ import { mountUserRadial } from "./pages/userRadial.js";
 import { mountScrollytelling } from "./pages/scrollytelling.js";
 import { mountIndustryAnalytics } from "./pages/industryAnalytics.js";
 import { mountSegmentation } from "./pages/segmentation.js";
+import { mountSuperCool } from "./pages/supercool.js";
 
 const app = document.getElementById("app");
 
@@ -50,6 +51,8 @@ async function router() {
     mountIndustryAnalytics(app);
   } else if (path === "/segmentation") {
     mountSegmentation(app);
+  } else if (path === "/supercool") {
+    mountSuperCool(app);
   } else if (path === "/login") {
     mountLogin(app);
   } else {

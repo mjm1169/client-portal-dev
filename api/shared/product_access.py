@@ -17,6 +17,9 @@ _DEV_GRANTS = {
     ("local.user@company.com", "industry-analytics"): [
         {"client": "General", "blob_name": "report_R1001.pdf", "attribute1": None, "attribute2": None, "attribute3": None},
     ],
+    ("local.user@company.com", "segmentation"): [
+        {"client": "all", "blob_name": "segmentation", "attribute1": None, "attribute2": None, "attribute3": None},
+    ],
 }
 
 

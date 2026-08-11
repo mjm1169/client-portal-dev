@@ -158,7 +158,30 @@ async function pickRespondents(apiKey, model, transcript, text) {
 
 // --- Entry point: landing choice -------------------------------------------
 
-export function mountSegmentation(container) {
+export async function mountSegmentation(container) {
+  container.innerHTML = `<div class="chart-loading">Loading&hellip;</div>`;
+
+  try {
+    const res = await fetch('/api/access/segmentation');
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        window.location.href = "/.auth/login/aad";
+        return;
+      }
+      container.innerHTML = `<div class="chart-loading">${
+        res.status === 403
+          ? "You don't have access to the Segmentation Explorer. Please contact your administrator."
+          : "Could not load the Segmentation Explorer."
+      }</div>`;
+      return;
+    }
+  } catch (err) {
+    console.error("Segmentation access check failed:", err);
+    container.innerHTML = `<div class="chart-loading">Could not load the Segmentation Explorer.</div>`;
+    return;
+  }
+
   renderLanding(container);
 }
 
