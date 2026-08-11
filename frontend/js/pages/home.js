@@ -112,7 +112,7 @@ export function mountHome(container, user) {
       <div class="feature-card${execUnlocked ? '' : ' feature-card--locked'}" id="goExecDashboard">
 
         <div class="feature-card__image feature-card__image--placeholder" aria-hidden="true">
-          <span class="feature-card__placeholder-emoji">📈</span>
+          <span class="feature-card__placeholder-emoji">😎</span>
           <div class="feature-card__lock-overlay" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36">
               <rect x="5" y="11" width="14" height="9" rx="1.5"/>
@@ -122,10 +122,9 @@ export function mountHome(container, user) {
         </div>
 
         <div class="feature-card__content">
-          <h2>Executive Dashboard</h2>
+          <h2>Super cool thing</h2>
           <p>
-            A high-level view built for leadership, surfacing the metrics
-            that matter most at a glance.
+            Exactly what it sounds like. Definitely worth unlocking.
           </p>
 
         </div>

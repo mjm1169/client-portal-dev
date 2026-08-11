@@ -439,6 +439,7 @@ body {
 .feature-card__placeholder-emoji {
   font-size: 4rem;
   line-height: 1;
+  filter: grayscale(1);
 }
 
 .feature-card--locked:hover .feature-card__placeholder-emoji {
